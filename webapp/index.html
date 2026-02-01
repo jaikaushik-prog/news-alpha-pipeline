@@ -574,6 +574,94 @@
             z-index: 10;
         }
 
+        /* Sector Heatmap */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            padding: 1rem;
+        }
+
+        .heatmap-cell {
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .heatmap-cell .sector-name {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .heatmap-cell .sentiment-value {
+            font-size: 1.25rem;
+            margin-top: 0.25rem;
+        }
+
+        /* News Timeline */
+        .news-timeline {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .news-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .news-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-text {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .news-sentiment {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .news-sentiment.positive {
+            background: rgba(72, 187, 120, 0.2);
+            color: var(--accent-green);
+        }
+
+        .news-sentiment.negative {
+            background: rgba(245, 101, 101, 0.2);
+            color: var(--accent-red);
+        }
+
+        .news-sentiment.neutral {
+            background: rgba(160, 174, 192, 0.2);
+            color: var(--text-muted);
+        }
+
         /* Top Stocks */
         .stock-item {
             display: flex;
@@ -692,6 +780,18 @@
             </div>
         </div>
 
+        <!-- AI Summary Card -->
+        <div class="card ai-summary-card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <span class="card-title">Market Intelligence Brief</span>
+            </div>
+            <div class="card-body">
+                <p id="aiSummary" style="font-size: 1.1rem; line-height: 1.6; color: var(--text-primary);">
+                    Run analysis to generate AI-powered market summary...
+                </p>
+            </div>
+        </div>
+
         <!-- Main Grid -->
         <div class="main-grid">
             <!-- Sector Table -->
@@ -758,6 +858,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- Sector Heatmap & News Timeline Row -->
+        <div class="main-grid" style="margin-top: 1.5rem;">
+            <!-- Sector Heatmap -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Sector Heatmap</span>
+                </div>
+                <div class="card-body">
+                    <div id="sectorHeatmap" class="heatmap-grid">
+                        <div style="text-align: center; color: var(--text-muted);">Run analysis to see heatmap</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- News Timeline -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Live Headlines</span>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div id="newsTimeline" class="news-timeline">
+                        <div style="padding: 1rem; text-align: center; color: var(--text-muted);">Run analysis to see
+                            headlines</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Footer -->
@@ -820,6 +948,11 @@
             updateRecommendations(data.long_sectors || [], data.short_sectors || [], data.high_conviction || []);
             updateTopStocks(data.top_stocks || []);
             updateWordCloud(data.word_cloud || []);
+
+            // New v4.0 features
+            updateAiSummary(data.ai_summary || '');
+            updateHeatmap(data.sector_signals || []);
+            updateNewsTimeline(data.headlines || []);
         }
 
         function updateTopStocks(stocks) {
@@ -885,6 +1018,77 @@
                     opacity: ${opacity};
                     font-weight: ${w.value > 50 ? 700 : 600}
                 ">${w.text}</span>`;
+            }).join('');
+        }
+
+        // Update AI Summary
+        function updateAiSummary(summary) {
+            const el = document.getElementById('aiSummary');
+            if (summary) {
+                el.textContent = summary;
+            } else {
+                el.textContent = 'Unable to generate summary. Run analysis to retry.';
+            }
+        }
+
+        // Update Sector Heatmap
+        function updateHeatmap(signals) {
+            const container = document.getElementById('sectorHeatmap');
+            if (!signals || !signals.length) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-muted);">No sector data</div>';
+                return;
+            }
+
+            container.innerHTML = signals.map(s => {
+                // Calculate color based on sentiment (-1 to +1)
+                const sentiment = s.sentiment || 0;
+                let bgColor, textColor;
+
+                if (sentiment > 0.3) {
+                    bgColor = 'rgba(72, 187, 120, 0.6)'; // Strong green
+                    textColor = '#fff';
+                } else if (sentiment > 0.1) {
+                    bgColor = 'rgba(72, 187, 120, 0.3)'; // Light green
+                    textColor = '#48BB78';
+                } else if (sentiment < -0.3) {
+                    bgColor = 'rgba(245, 101, 101, 0.6)'; // Strong red
+                    textColor = '#fff';
+                } else if (sentiment < -0.1) {
+                    bgColor = 'rgba(245, 101, 101, 0.3)'; // Light red
+                    textColor = '#F56565';
+                } else {
+                    bgColor = 'rgba(160, 174, 192, 0.3)'; // Neutral gray
+                    textColor = '#A0AEC0';
+                }
+
+                const sentStr = sentiment >= 0 ? `+${sentiment.toFixed(2)}` : sentiment.toFixed(2);
+
+                return `<div class="heatmap-cell" style="background: ${bgColor}; color: ${textColor};">
+                    <div class="sector-name">${s.sector}</div>
+                    <div class="sentiment-value">${sentStr}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // Update News Timeline
+        function updateNewsTimeline(headlines) {
+            const container = document.getElementById('newsTimeline');
+            if (!headlines || !headlines.length) {
+                container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">No headlines available</div>';
+                return;
+            }
+
+            container.innerHTML = headlines.map(h => {
+                const sentClass = h.sentiment_label || 'neutral';
+                const sentStr = h.sentiment >= 0 ? `+${h.sentiment.toFixed(2)}` : h.sentiment.toFixed(2);
+
+                return `<div class="news-item">
+                    <div class="news-text">${h.text}</div>
+                    <div class="news-meta">
+                        <span>${h.source}</span>
+                        <span class="news-sentiment ${sentClass}">${sentStr}</span>
+                    </div>
+                </div>`;
             }).join('');
         }
 

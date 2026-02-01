@@ -825,6 +825,57 @@ def extract_hot_stocks(headlines: List[str]) -> List[Dict]:
     
     return hot_stocks[:10]  # Top 10
 
+
+def generate_ai_summary(sector_signals: List[Dict], top_stocks: List[Dict], regime: str) -> str:
+    """
+    Generate an AI-powered executive summary of the market analysis.
+    Uses template-based generation (no external API needed).
+    """
+    if not sector_signals:
+        return "Insufficient data for market summary. Run analysis to populate."
+    
+    # Find top performing and worst performing sectors
+    sorted_sectors = sorted(sector_signals, key=lambda x: x['sentiment'], reverse=True)
+    best_sector = sorted_sectors[0] if sorted_sectors else None
+    worst_sector = sorted_sectors[-1] if len(sorted_sectors) > 1 else None
+    
+    # Count recommendations
+    long_count = sum(1 for s in sector_signals if 'long' in s.get('recommendation', ''))
+    short_count = sum(1 for s in sector_signals if 'short' in s.get('recommendation', ''))
+    
+    # Build summary
+    parts = []
+    
+    # Opening line based on regime
+    if regime == 'bullish':
+        parts.append("Markets show BULLISH momentum today.")
+    elif regime == 'bearish':
+        parts.append("Markets are under BEARISH pressure today.")
+    else:
+        parts.append("Markets are trading in a NEUTRAL range today.")
+    
+    # Sector highlights
+    if best_sector:
+        sent_str = f"+{best_sector['sentiment']:.2f}" if best_sector['sentiment'] >= 0 else f"{best_sector['sentiment']:.2f}"
+        parts.append(f"{best_sector['sector'].upper()} leads with {sent_str} sentiment.")
+    
+    if worst_sector and worst_sector['sentiment'] < 0:
+        parts.append(f"{worst_sector['sector'].upper()} faces headwinds ({worst_sector['sentiment']:.2f}).")
+    
+    # Stock mentions
+    if top_stocks:
+        top_stock = top_stocks[0]
+        parts.append(f"Most active: {top_stock['symbol']} ({top_stock['mentions']} mentions).")
+    
+    # Recommendation summary
+    if long_count > short_count:
+        parts.append(f"Bias: {long_count} long signals vs {short_count} short.")
+    elif short_count > long_count:
+        parts.append(f"Caution: {short_count} short signals outweigh {long_count} long.")
+    
+    return " ".join(parts)
+
+
 # ============== MAIN ANALYSIS ==============
 
 def run_live_analysis() -> Dict:
@@ -968,6 +1019,21 @@ def run_live_analysis() -> Dict:
     effective_sentiment = sum(s['sentiment'] * s['news_count'] for s in sector_signals) / max(1, total_sector_news) if sector_signals else 0
     regime = 'bullish' if effective_sentiment > 0.1 else 'bearish' if effective_sentiment < -0.1 else 'neutral'
     
+    # Generate AI Summary
+    ai_summary = generate_ai_summary(sector_signals, top_stocks, regime)
+    
+    # Prepare headlines for timeline (top 20)
+    headlines_timeline = []
+    for h in all_headlines[:20]:
+        sent = analyze_sentiment_enhanced(h['headline'])
+        headlines_timeline.append({
+            'text': h['headline'],
+            'source': h.get('source', 'Unknown'),
+            'timestamp': h.get('timestamp', datetime.now().isoformat()),
+            'sentiment': sent['score'],
+            'sentiment_label': 'positive' if sent['score'] > 0.1 else 'negative' if sent['score'] < -0.1 else 'neutral'
+        })
+    
     all_sources = set()
     for s in sector_signals:
         all_sources.update(s.get('sources', []))
@@ -977,6 +1043,8 @@ def run_live_analysis() -> Dict:
         'headlines_analyzed': total_headlines,
         'effective_sentiment': round(effective_sentiment, 3),
         'regime': regime,
+        'ai_summary': ai_summary,
+        'headlines': headlines_timeline,
         'sector_signals': sector_signals,
         'long_sectors': [s['sector'] for s in sector_signals if 'long' in s['recommendation']],
         'short_sectors': [s['sector'] for s in sector_signals if 'short' in s['recommendation']],
@@ -989,7 +1057,7 @@ def run_live_analysis() -> Dict:
             'zerodha_pulse': len(pulse_headlines),
             'google_trends': len(trends_headlines)
         },
-        'analysis_version': '3.2 (Semantic + NER)'
+        'analysis_version': '4.0 (AI Summary + Timeline)'
     }
 
 
