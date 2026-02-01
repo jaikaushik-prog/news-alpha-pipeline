@@ -4,23 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏆 News Alpha Pipeline</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Wall Street Club - News Analyser</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0f1a;
-            --bg-secondary: #111827;
-            --bg-card: #1f2937;
-            --bg-hover: #374151;
-            --accent-green: #10b981;
-            --accent-red: #ef4444;
-            --accent-blue: #3b82f6;
-            --accent-yellow: #f59e0b;
-            --accent-purple: #8b5cf6;
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --text-muted: #6b7280;
-            --border: #374151;
+            /* Wall Street Club Navy Theme */
+            --bg-primary: #0a1628;
+            --bg-secondary: #0f1d32;
+            --bg-card: #152238;
+            --bg-hover: #1a2d4a;
+            --accent-teal: #4fd1c5;
+            --accent-silver: #a0aec0;
+            --accent-green: #48bb78;
+            --accent-red: #fc8181;
+            --accent-gold: #d4af37;
+            --accent-blue: #63b3ed;
+            --text-primary: #f7fafc;
+            --text-secondary: #a0aec0;
+            --text-muted: #718096;
+            --border: #2d3e5f;
         }
 
         * {
@@ -37,11 +41,11 @@
             line-height: 1.6;
         }
 
-        /* Header */
+        /* Header - Wall Street Club Style */
         .header {
-            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
             border-bottom: 1px solid var(--border);
-            padding: 1.5rem 2rem;
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -50,26 +54,57 @@
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
         }
 
         .logo-icon {
-            font-size: 2rem;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-silver), #fff);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-icon svg {
+            width: 32px;
+            height: 32px;
+            fill: var(--bg-primary);
         }
 
         .logo-text h1 {
+            font-family: 'Cormorant Garamond', serif;
             font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 0.05em;
         }
 
         .logo-text span {
-            font-size: 0.75rem;
-            color: var(--text-muted);
+            font-size: 0.7rem;
+            color: var(--accent-teal);
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.15em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-teal);
         }
 
         .status-badge {
@@ -78,7 +113,8 @@
             gap: 0.5rem;
             padding: 0.5rem 1rem;
             background: var(--bg-card);
-            border-radius: 9999px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
             font-size: 0.875rem;
         }
 
@@ -109,10 +145,36 @@
             padding: 2rem;
         }
 
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 2rem 0 3rem;
+        }
+
+        .hero h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .hero .highlight {
+            color: var(--accent-teal);
+        }
+
         /* Control Bar */
         .control-bar {
             display: flex;
             gap: 1rem;
+            justify-content: center;
             margin-bottom: 2rem;
             flex-wrap: wrap;
         }
@@ -120,8 +182,9 @@
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 0.5rem;
+            border-radius: 6px;
             font-weight: 600;
+            font-size: 0.875rem;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
@@ -130,13 +193,13 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            color: white;
+            background: linear-gradient(135deg, var(--accent-teal), #38b2ac);
+            color: var(--bg-primary);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 10px 30px rgba(79, 209, 197, 0.3);
         }
 
         .btn-secondary {
@@ -147,6 +210,7 @@
 
         .btn-secondary:hover {
             background: var(--bg-hover);
+            border-color: var(--accent-teal);
         }
 
         .btn:disabled {
@@ -157,7 +221,7 @@
         /* Cards */
         .card {
             background: var(--bg-card);
-            border-radius: 1rem;
+            border-radius: 12px;
             border: 1px solid var(--border);
             overflow: hidden;
         }
@@ -168,10 +232,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: rgba(79, 209, 197, 0.03);
         }
 
         .card-title {
-            font-size: 1rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.125rem;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -192,14 +258,27 @@
 
         .stat-card {
             background: var(--bg-card);
-            padding: 1.25rem;
-            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border-radius: 12px;
             text-align: center;
             border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-teal), var(--accent-blue));
         }
 
         .stat-value {
-            font-size: 1.75rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0.25rem;
         }
@@ -208,6 +287,7 @@
             font-size: 0.75rem;
             color: var(--text-muted);
             text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
 
         .stat-positive {
@@ -221,7 +301,7 @@
         /* Main Layout */
         .main-grid {
             display: grid;
-            grid-template-columns: 1fr 350px;
+            grid-template-columns: 1fr 320px;
             gap: 1.5rem;
         }
 
@@ -233,30 +313,38 @@
             .stats-row {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .nav-links {
+                display: none;
+            }
         }
 
         /* Regime Badge */
         .regime-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
+            padding: 0.375rem 1rem;
+            border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .regime-bullish {
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(72, 187, 120, 0.15);
             color: var(--accent-green);
+            border: 1px solid rgba(72, 187, 120, 0.3);
         }
 
         .regime-bearish {
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(252, 129, 129, 0.15);
             color: var(--accent-red);
+            border: 1px solid rgba(252, 129, 129, 0.3);
         }
 
         .regime-neutral {
-            background: var(--bg-hover);
+            background: rgba(160, 174, 192, 0.15);
             color: var(--text-secondary);
+            border: 1px solid rgba(160, 174, 192, 0.3);
         }
 
         /* Sector Table */
@@ -268,9 +356,10 @@
         .sector-table th {
             text-align: left;
             padding: 0.75rem;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
+            letter-spacing: 0.1em;
             border-bottom: 1px solid var(--border);
         }
 
@@ -283,6 +372,10 @@
             background: var(--bg-hover);
         }
 
+        .sector-table tr:last-child td {
+            border-bottom: none;
+        }
+
         .sector-name {
             font-weight: 600;
             display: flex;
@@ -293,56 +386,58 @@
         /* Signal Pills */
         .signal-pill {
             padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
             font-weight: 600;
             white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
         .signal-long {
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(72, 187, 120, 0.15);
             color: var(--accent-green);
         }
 
         .signal-short {
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(252, 129, 129, 0.15);
             color: var(--accent-red);
         }
 
         .signal-hold {
-            background: var(--bg-hover);
+            background: rgba(160, 174, 192, 0.15);
             color: var(--text-secondary);
         }
 
         /* Conviction Dots */
         .conviction {
             display: flex;
-            gap: 0.25rem;
+            gap: 4px;
         }
 
         .conviction-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: var(--text-muted);
+            background: var(--border);
         }
 
         .conviction-dot.active {
-            background: var(--accent-yellow);
+            background: var(--accent-gold);
         }
 
         /* Score Bar */
         .score-bar {
-            height: 8px;
+            height: 6px;
             background: var(--bg-secondary);
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
-            width: 80px;
+            width: 60px;
         }
 
         .score-fill {
             height: 100%;
-            border-radius: 4px;
+            border-radius: 3px;
             transition: width 0.3s;
         }
 
@@ -354,7 +449,7 @@
             background: var(--accent-red);
         }
 
-        /* Recommendations Panel - FIXED */
+        /* Recommendations Panel */
         .recommendations-card {
             height: fit-content;
         }
@@ -362,8 +457,9 @@
         .rec-section {
             background: var(--bg-secondary);
             padding: 1rem;
-            border-radius: 0.75rem;
+            border-radius: 8px;
             margin-bottom: 1rem;
+            border: 1px solid var(--border);
         }
 
         .rec-section:last-child {
@@ -371,12 +467,15 @@
         }
 
         .rec-title {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 600;
             margin-bottom: 0.75rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
         }
 
         .rec-list {
@@ -387,24 +486,24 @@
 
         .rec-chip {
             padding: 0.375rem 0.75rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
 
         .rec-chip.long {
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(72, 187, 120, 0.15);
             color: var(--accent-green);
         }
 
         .rec-chip.short {
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(252, 129, 129, 0.15);
             color: var(--accent-red);
         }
 
         .rec-chip.high {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--accent-yellow);
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--accent-gold);
         }
 
         /* Loading */
@@ -419,7 +518,7 @@
             width: 40px;
             height: 40px;
             border: 3px solid var(--border);
-            border-top-color: var(--accent-blue);
+            border-top-color: var(--accent-teal);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -429,6 +528,21 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            border-top: 1px solid var(--border);
+            margin-top: 3rem;
+        }
+
+        .footer a {
+            color: var(--accent-teal);
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -436,12 +550,23 @@
     <!-- Header -->
     <header class="header">
         <div class="logo">
-            <span class="logo-icon">🏆</span>
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4 21V8L12 3L20 8V21H4ZM6 19H18V9L12 5.5L6 9V19ZM8 17V11H10V17H8ZM11 17V13H13V17H11ZM14 17V11H16V17H14Z" />
+                </svg>
+            </div>
             <div class="logo-text">
-                <h1>News Alpha Pipeline</h1>
-                <span>Institutional-Grade Analysis</span>
+                <h1>Wall Street Club</h1>
+                <span>News Analyser • BITS Pilani</span>
             </div>
         </div>
+        <nav class="nav-links">
+            <a href="#">Home</a>
+            <a href="#">About</a>
+            <a href="#">Members</a>
+            <a href="#">More</a>
+        </nav>
         <div class="status-badge">
             <span class="status-dot"></span>
             <span id="statusText">Ready</span>
@@ -450,10 +575,22 @@
 
     <!-- Main Content -->
     <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h2>Market Sentiment Intelligence</h2>
+            <p>Real-time analysis of <span class="highlight">10+ news sources</span> including Zerodha Pulse, Google
+                Trends, and major financial outlets.</p>
+        </div>
+
         <!-- Control Bar -->
         <div class="control-bar">
-            <button class="btn btn-primary" id="runAnalysis">🚀 Run Analysis</button>
-            <button class="btn btn-secondary" id="loadDemo">📊 Load Demo</button>
+            <button class="btn btn-primary" id="runAnalysis">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+                Analyse Now
+            </button>
+            <button class="btn btn-secondary" id="loadDemo">📊 Demo Data</button>
             <button class="btn btn-secondary" id="refreshData">🔄 Refresh</button>
         </div>
 
@@ -492,28 +629,34 @@
                 </div>
             </div>
 
-            <!-- Recommendations - FIXED WIDTH -->
+            <!-- Recommendations -->
             <div class="card recommendations-card">
                 <div class="card-header">
                     <span class="card-title">💰 Recommendations</span>
                 </div>
                 <div class="card-body">
                     <div class="rec-section">
-                        <div class="rec-title">🟢 LONG</div>
+                        <div class="rec-title">🟢 Long Positions</div>
                         <div class="rec-list" id="longList"><span style="color: var(--text-muted)">--</span></div>
                     </div>
                     <div class="rec-section">
-                        <div class="rec-title">🔴 SHORT</div>
+                        <div class="rec-title">🔴 Short Positions</div>
                         <div class="rec-list" id="shortList"><span style="color: var(--text-muted)">--</span></div>
                     </div>
                     <div class="rec-section">
-                        <div class="rec-title">🔥 HIGH CONVICTION</div>
+                        <div class="rec-title">⭐ High Conviction</div>
                         <div class="rec-list" id="highConvictionList"><span style="color: var(--text-muted)">--</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Wall Street Club • BITS Pilani • <a href="#">Read our Wall Street Pulse</a></p>
+        <p style="margin-top: 0.5rem;">Powered by live RSS feeds, Zerodha Pulse, and Google Trends</p>
     </div>
 
     <script>
@@ -528,22 +671,22 @@
         // Run Analysis (Live)
         async function runLiveAnalysis() {
             runBtn.disabled = true;
-            statusText.textContent = '🔄 Fetching live news...';
+            statusText.textContent = 'Analysing...';
             sectorTableContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
             try {
                 const response = await fetch(`${API_BASE}/api/analyze`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ max_headlines: 50, max_age_hours: 24 })
+                    body: JSON.stringify({ max_headlines: 100, max_age_hours: 24 })
                 });
                 if (!response.ok) throw new Error('Analysis failed');
                 const data = await response.json();
                 updateDashboard(data);
-                statusText.textContent = `✅ Live (${data.sources?.join(', ') || 'RSS'})`;
+                statusText.textContent = `Live • ${data.headlines_analyzed} headlines`;
             } catch (error) {
                 console.error('Live analysis failed:', error);
-                statusText.textContent = '⚠️ Using demo data';
+                statusText.textContent = 'Demo Mode';
                 loadDemoData();
             } finally {
                 runBtn.disabled = false;
@@ -569,10 +712,10 @@
                 long_sectors: ['auto', 'banking', 'pharma'],
                 short_sectors: ['it', 'metals'],
                 high_conviction: ['auto', 'banking', 'it'],
-                headlines_analyzed: 47
+                headlines_analyzed: 85
             };
             updateDashboard(demoData);
-            statusText.textContent = '📊 Demo Data';
+            statusText.textContent = 'Demo Data';
         }
 
         demoBtn.addEventListener('click', () => {
@@ -606,17 +749,17 @@
         // Update Sector Table
         function updateSectorTable(signals) {
             if (!signals.length) {
-                sectorTableContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No data</p>';
+                sectorTableContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No data available</p>';
                 return;
             }
 
             signals.sort((a, b) => Math.abs(b.trinity_score) - Math.abs(a.trinity_score));
 
             let html = `<table class="sector-table"><thead><tr>
-                <th>Sector</th><th>Sentiment</th><th>Trinity</th><th>Signal</th><th>Conv</th>
+                <th>Sector</th><th>Sentiment</th><th>Score</th><th>Signal</th><th>Conviction</th>
             </tr></thead><tbody>`;
 
-            const icons = { banking: '🏦', it: '💻', pharma: '💊', auto: '🚗', metals: '⚙️', infra: '🏗️', fmcg: '🛒', energy: '⚡' };
+            const icons = { banking: '🏦', it: '💻', pharma: '💊', auto: '🚗', metals: '⚙️', infra: '🏗️', fmcg: '🛒', energy: '⚡', telecom: '📡' };
 
             signals.forEach(s => {
                 const scoreColor = s.trinity_score >= 0 ? 'positive' : 'negative';
@@ -632,7 +775,7 @@
                     </td>
                     <td>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="color: ${s.trinity_score >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight: 600; min-width: 50px;">
+                            <span style="color: ${s.trinity_score >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight: 600; min-width: 45px;">
                                 ${s.trinity_score >= 0 ? '+' : ''}${s.trinity_score.toFixed(2)}
                             </span>
                             <div class="score-bar"><div class="score-fill ${scoreColor}" style="width: ${scoreWidth}%"></div></div>
@@ -659,10 +802,10 @@
             autoRefreshInterval = setInterval(() => {
                 console.log('Auto-refreshing...');
                 runLiveAnalysis();
-            }, 5 * 60 * 1000); // 5 minutes
+            }, 5 * 60 * 1000);
         }
 
-        // On page load: Run live analysis immediately
+        // On page load: Run live analysis
         document.addEventListener('DOMContentLoaded', () => {
             runLiveAnalysis();
             startAutoRefresh();
