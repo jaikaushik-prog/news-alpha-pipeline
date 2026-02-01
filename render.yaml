@@ -1,0 +1,13 @@
+# Render.com Blueprint
+# Deploy: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: news-alpha-pipeline
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn webapp.api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+    plan: free

@@ -1,0 +1,138 @@
+# Union Budget Event Dates and Timestamps
+# All times in IST (Asia/Kolkata)
+
+budget_events:
+  "2014-15":
+    fiscal_year: "2014-15"
+    date: "2014-07-10"
+    type: "Full Budget"  # First budget of Modi govt
+    finance_minister: "Arun Jaitley"
+    speech_start: "11:00"
+    speech_end: "13:30"
+    pdf_file: "bs201415.pdf"
+    notes: "First full budget after 2014 elections"
+
+  "2015-16":
+    fiscal_year: "2015-16"
+    date: "2015-02-28"
+    type: "Full Budget"
+    finance_minister: "Arun Jaitley"
+    speech_start: "11:00"
+    speech_end: "13:00"
+    pdf_file: "bs201516.pdf"
+    notes: "Last budget presented on last working day of Feb"
+
+  "2016-17":
+    fiscal_year: "2016-17"
+    date: "2016-02-29"
+    type: "Full Budget"
+    finance_minister: "Arun Jaitley"
+    speech_start: "11:00"
+    speech_end: "13:00"
+    pdf_file: "bs201617.pdf"
+    notes: "Leap year budget"
+
+  "2017-18":
+    fiscal_year: "2017-18"
+    date: "2017-02-01"
+    type: "Full Budget"
+    finance_minister: "Arun Jaitley"
+    speech_start: "11:00"
+    speech_end: "12:30"
+    pdf_file: "bs201718.pdf"
+    notes: "First budget on Feb 1 (new tradition); merged rail budget"
+
+  "2018-19":
+    fiscal_year: "2018-19"
+    date: "2018-02-01"
+    type: "Full Budget"
+    finance_minister: "Arun Jaitley"
+    speech_start: "11:00"
+    speech_end: "12:45"
+    pdf_file: "bs201819.pdf"
+    notes: ""
+
+  "2019-20":
+    fiscal_year: "2019-20"
+    date: "2019-07-05"
+    type: "Full Budget"
+    finance_minister: "Nirmala Sitharaman"
+    speech_start: "11:00"
+    speech_end: "13:15"
+    pdf_file: "bs201920.pdf"
+    notes: "First budget by Nirmala Sitharaman; presented in bahi-khata"
+
+  "2020-21":
+    fiscal_year: "2020-21"
+    date: "2020-02-01"
+    type: "Full Budget"
+    finance_minister: "Nirmala Sitharaman"
+    speech_start: "11:00"
+    speech_end: "13:45"
+    pdf_file: "bs202021.pdf"
+    notes: "Longest budget speech; pre-COVID budget"
+
+  "2021-22":
+    fiscal_year: "2021-22"
+    date: "2021-02-01"
+    type: "Full Budget"
+    finance_minister: "Nirmala Sitharaman"
+    speech_start: "11:00"
+    speech_end: "12:50"
+    pdf_file: "bs202122.pdf"
+    notes: "First paperless budget; COVID recovery focus"
+
+  "2022-23":
+    fiscal_year: "2022-23"
+    date: "2022-02-01"
+    type: "Full Budget"
+    finance_minister: "Nirmala Sitharaman"
+    speech_start: "11:00"
+    speech_end: "12:30"
+    pdf_file: "bs202223.pdf"
+    notes: "Infrastructure and capex focus"
+
+  "2023-24":
+    fiscal_year: "2023-24"
+    date: "2023-02-01"
+    type: "Full Budget"
+    finance_minister: "Nirmala Sitharaman"
+    speech_start: "11:00"
+    speech_end: "12:30"
+    pdf_file: "bs2023_24.pdf"
+    notes: "Last full budget before 2024 elections"
+
+  "2024-25":
+    fiscal_year: "2024-25"
+    date: "2024-07-23"
+    type: "Full Budget"
+    finance_minister: "Nirmala Sitharaman"
+    speech_start: "11:00"
+    speech_end: "12:30"
+    pdf_file: "bs2024_25.pdf"
+    notes: "Post-election budget; coalition government"
+
+  "2025-26":
+    fiscal_year: "2025-26"
+    date: "2025-02-01"
+    type: "Full Budget"
+    finance_minister: "Nirmala Sitharaman"
+    speech_start: "11:00"
+    speech_end: "12:30"
+    pdf_file: "bs2025_26.pdf"
+    notes: "Latest budget"
+
+# Market timing configuration
+market_hours:
+  open: "09:15"
+  close: "15:30"
+  timezone: "Asia/Kolkata"
+  pre_open_start: "09:00"
+  pre_open_end: "09:08"
+  
+# Trading calendar notes
+trading_calendar:
+  # Budget day is always a trading day (market open)
+  # Pre-budget volatility typically starts 2-3 days before
+  pre_budget_window_days: 3
+  post_budget_window_days: 5

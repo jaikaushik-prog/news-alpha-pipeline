@@ -1,0 +1,49 @@
+# Path Configuration for Budget Speech Impact Analysis
+# All paths are relative to base_dir unless absolute
+
+base_dir: "c:/Users/DELL/Desktop/budget_speech"
+
+# Raw data paths (immutable - never modify)
+raw:
+  market_5min: "${base_dir}/data/raw/market/nifty500_5min"
+  speeches: "${base_dir}/data/raw/speeches"
+  metadata: "${base_dir}/data/raw/market/metadata"
+  stock_sector_map: "${base_dir}/data/raw/market/metadata/stock_sector_map.csv"
+
+# Intermediate outputs (reproducible from raw)
+intermediate:
+  speech_text: "${base_dir}/data/intermediate/speech_text"
+  market_clean: "${base_dir}/data/intermediate/market_clean"
+  aligned_events: "${base_dir}/data/intermediate/aligned_events"
+  
+  # Specific intermediate files
+  sector_returns: "${base_dir}/data/intermediate/market_clean/sector_5min_returns.parquet"
+  market_controls: "${base_dir}/data/intermediate/market_clean/market_controls.parquet"
+  liquidity_metrics: "${base_dir}/data/intermediate/market_clean/liquidity_metrics.parquet"
+  sector_event_panels: "${base_dir}/data/intermediate/aligned_events/sector_event_panels.parquet"
+
+# Processed/final outputs
+processed:
+  modeling_panel: "${base_dir}/data/processed/modeling_panel.parquet"
+  robustness_sets: "${base_dir}/data/processed/robustness_sets.parquet"
+  final_dataset: "${base_dir}/data/processed/final_dataset.parquet"
+
+# Output artifacts
+outputs:
+  figures: "${base_dir}/outputs/figures"
+  attention_heatmaps: "${base_dir}/outputs/figures/attention_heatmaps"
+  intraday_reactions: "${base_dir}/outputs/figures/intraday_reactions"
+  robustness_figures: "${base_dir}/outputs/figures/robustness"
+  tables: "${base_dir}/outputs/tables"
+  regression_results: "${base_dir}/outputs/tables/regression_results"
+  classification_metrics: "${base_dir}/outputs/tables/classification_metrics"
+  logs: "${base_dir}/outputs/logs"
+
+# Notebooks
+notebooks: "${base_dir}/notebooks"
+
+# Config files
+config:
+  sectors: "${base_dir}/config/sectors.yaml"
+  event_dates: "${base_dir}/config/event_dates.yaml"
+  model_params: "${base_dir}/config/model_params.yaml"

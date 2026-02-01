@@ -1,0 +1,202 @@
+# Model Parameters for Budget Speech Impact Analysis
+# All parameters should be tunable from this single file
+
+# ============================================================================
+# DATA PARAMETERS
+# ============================================================================
+
+data:
+  bar_size_minutes: 5
+  trading_hours:
+    start: "09:15"
+    end: "15:30"
+  bars_per_day: 75  # (15:30 - 09:15) / 5 = 75 bars
+
+# ============================================================================
+# EVENT STUDY PARAMETERS
+# ============================================================================
+
+event_windows:
+  # Minutes relative to sector mention
+  pre_event: [-60, -30, -15, -5]
+  post_event: [5, 15, 30, 60, 120]
+  
+  # Estimation window for expected returns (trading days before event)
+  estimation_window_days: 20
+  
+  # Gap between estimation and event window
+  gap_days: 2
+
+# ============================================================================
+# VOLATILITY PARAMETERS
+# ============================================================================
+
+volatility:
+  # Rolling window for realized volatility (in 5-min bars)
+  lookback_bars: 12  # 60 minutes
+  
+  # Minimum observations required
+  min_observations: 6
+  
+  # Annualization factor (assuming 252 trading days, 75 bars/day)
+  annualization_factor: 137.48  # sqrt(252 * 75)
+  
+  # GARCH parameters (for advanced volatility modeling)
+  garch:
+    p: 1
+    q: 1
+
+# ============================================================================
+# LIQUIDITY PARAMETERS
+# ============================================================================
+
+liquidity:
+  # Amihud illiquidity lookback (trading days)
+  amihud_lookback: 20
+  
+  # Roll spread lookback (5-min bars)
+  roll_lookback: 60  # 5 hours of trading
+  
+  # Volume anomaly baseline (trading days)
+  volume_baseline_days: 20
+
+# ============================================================================
+# NLP / SECTOR CLASSIFICATION PARAMETERS
+# ============================================================================
+
+classification:
+  # Minimum probability to consider a sentence relevant to a sector
+  min_probability: 0.1
+  
+  # Classification model type
+  model_type: "keyword_weighted"  # Options: keyword_weighted, sentence_transformers
+  
+  # Sentence transformer model (if using embeddings)
+  embedding_model: "all-MiniLM-L6-v2"
+  
+  # Keyword matching
+  keyword_matching:
+    case_sensitive: false
+    use_stemming: true
+    ngram_range: [1, 3]
+
+# ============================================================================
+# ATTENTION INTENSITY PARAMETERS
+# ============================================================================
+
+attention_weights:
+  # Linguistic importance weights
+  fiscal_numbers: 2.0      # Sentences with ₹ amounts, percentages
+  policy_announcements: 1.8  # New scheme announcements
+  targets_goals: 1.5       # Specific targets mentioned
+  commitments: 1.3         # "We will", "Government shall"
+  commentary: 1.0          # General discussion
+  
+  # Decay factor for repeated mentions
+  repetition_decay: 0.8
+  
+  # Minimum cumulative intensity to trigger "first mention"
+  first_mention_threshold: 0.5
+
+# ============================================================================
+# SENTIMENT ANALYSIS PARAMETERS
+# ============================================================================
+
+sentiment:
+  # Sentiment analyzer
+  analyzer: "vader"  # Options: vader, textblob, finbert
+  
+  # Certainty keywords
+  certainty_positive: ["will", "shall", "must", "committed", "ensure", "guarantee"]
+  certainty_negative: ["may", "might", "could", "possibly", "consider", "explore"]
+  
+  # Actionability keywords
+  action_verbs: ["allocate", "invest", "provide", "launch", "establish", "create", "build"]
+
+# ============================================================================
+# MODELING PARAMETERS
+# ============================================================================
+
+modeling:
+  # Random seed for reproducibility
+  random_seed: 42
+  
+  # Train/test split
+  train_test_split: 0.8
+  
+  # Cross-validation
+  cv_folds: 5
+  
+  # Classification threshold
+  classification_threshold: 0.5
+  
+  # Regression
+  regression:
+    include_fixed_effects: true
+    cluster_standard_errors: "sector"  # Options: sector, year, two-way
+    
+  # Hazard model
+  hazard:
+    baseline: "weibull"  # Options: weibull, exponential, cox
+    
+# ============================================================================
+# CONTROL VARIABLES
+# ============================================================================
+
+controls:
+  # Market-level controls
+  market:
+    - nifty500_return_5min
+    - india_vix_change
+    - opening_gap
+    
+  # Sector-level controls
+  sector:
+    - pre_event_volatility
+    - pre_event_volume
+    - historical_budget_sensitivity
+    
+  # Macro controls (if available)
+  macro:
+    - us_futures_return
+    - crude_oil_change
+
+# ============================================================================
+# VALIDATION PARAMETERS
+# ============================================================================
+
+validation:
+  # Placebo test
+  placebo:
+    n_random_dates: 100
+    exclude_actual_budget: true
+    
+  # Permutation test
+  permutation:
+    n_permutations: 1000
+    
+  # Bootstrap
+  bootstrap:
+    n_iterations: 1000
+    confidence_level: 0.95
+
+# ============================================================================
+# OUTPUT PARAMETERS
+# ============================================================================
+
+output:
+  # Figure settings
+  figures:
+    dpi: 300
+    format: "png"
+    style: "seaborn-v0_8-whitegrid"
+    
+  # Table format
+  tables:
+    format: "latex"  # Options: latex, html, markdown
+    decimal_places: 3
+    
+  # Logging
+  logging:
+    level: "INFO"
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

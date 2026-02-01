@@ -1,0 +1,554 @@
+# Sector Definitions for Budget Speech Impact Analysis
+# Each sector contains:
+#   - name: Display name
+#   - stocks: List of NSE symbols in this sector
+#   - keywords: Keywords for soft-classification of speech sentences
+#   - weight: Base weight for attention intensity calculation
+
+sectors:
+  banking_nbfc:
+    name: "Banking & NBFC"
+    stocks:
+      - HDFCBANK
+      - ICICIBANK
+      - SBIN
+      - AXISBANK
+      - KOTAKBANK
+      - BAJFINANCE
+      - BAJAJFINSV
+      - BANKBARODA
+      - PNB
+      - INDUSINDBK
+      - FEDERALBNK
+      - IDFCFIRSTB
+      - BANDHANBNK
+      - AUBANK
+      - CANBK
+      - UNIONBANK
+      - INDIANB
+      - IOB
+      - CENTRALBK
+      - MAHABANK
+      - UCOBANK
+      - BANKINDIA
+      - KARURVYSYA
+      - CUB
+      - J&KBANK
+      - RBLBANK
+      - IDBI
+      - YESBANK
+      - LICHSGFIN
+      - PNBHOUSING
+      - CANFINHOME
+      - MUTHOOTFIN
+      - MANAPPURAM
+      - CHOLAFIN
+      - SHRIRAMFIN
+      - M&MFIN
+      - SUNDARMFIN
+      - LTF
+      - POONAWALLA
+    keywords:
+      - bank
+      - banking
+      - credit
+      - loan
+      - deposit
+      - npa
+      - lending
+      - interest rate
+      - rbi
+      - nbfc
+      - financial inclusion
+      - mudra
+      - priority sector
+      - recapitalization
+      - bad loan
+      - msme credit
+      - jan dhan
+      
+  infrastructure:
+    name: "Infrastructure"
+    stocks:
+      - LT
+      - IRB
+      - KNRCON
+      - PNCINFRA
+      - NBCC
+      - NCC
+      - ENGINERSIN
+      - RVNL
+      - IRCON
+      - KPIL
+      - HSCL
+      - KEC
+      - AFCONS
+      - JSWINFRA
+      - SIEMENS
+      - ABB
+      - THERMAX
+      - CUMMINSIND
+      - GMRAIRPORT
+      - ADANIPORTS
+      - CONCOR
+      - IRFC
+      - IRCTC
+    keywords:
+      - infrastructure
+      - roads
+      - highways
+      - national highway
+      - expressway
+      - ports
+      - railways
+      - rail
+      - construction
+      - metros
+      - bridges
+      - tunnels
+      - logistics
+      - bharatmala
+      - sagarmala
+      - gati shakti
+      - capital expenditure
+      - capex
+      - public investment
+
+  energy_power:
+    name: "Energy & Power"
+    stocks:
+      - NTPC
+      - POWERGRID
+      - TATAPOWER
+      - ADANIGREEN
+      - ADANIENSOL
+      - JSWENERGY
+      - TORNTPOWER
+      - CESC
+      - NHPC
+      - SJVN
+      - RELIANCE
+      - ONGC
+      - OIL
+      - BPCL
+      - IOC
+      - HINDPETRO
+      - GAIL
+      - PETRONET
+      - IGL
+      - MGL
+      - GUJGASLTD
+      - ATGL
+      - GSPL
+      - COALINDIA
+      - NLCINDIA
+      - IREDA
+      - PFC
+      - RECLTD
+      - SUZLON
+      - INOXWIND
+      - WAAREEENER
+      - NTPCGREEN
+    keywords:
+      - power
+      - energy
+      - electricity
+      - renewable
+      - solar
+      - wind
+      - coal
+      - gas
+      - petroleum
+      - oil
+      - refinery
+      - green energy
+      - clean energy
+      - carbon
+      - emission
+      - ev charging
+      - transmission
+      - distribution
+      - discoms
+      - viability gap
+
+  it_technology:
+    name: "IT & Technology"
+    stocks:
+      - TCS
+      - INFY
+      - WIPRO
+      - HCLTECH
+      - TECHM
+      - LTIM
+      - LTTS
+      - PERSISTENT
+      - COFORGE
+      - MPHASIS
+      - CYIENT
+      - KPITTECH
+      - TATAELXSI
+      - ZENSARTECH
+      - MASTEK
+      - BSOFT
+      - SONATSOFTW
+      - HAPPSTMNDS
+      - NEWGEN
+      - INTELLECT
+      - OFSS
+      - ECLERX
+      - TANLA
+      - ROUTE
+      - LATENTVIEW
+      - NETWEB
+    keywords:
+      - technology
+      - digital
+      - software
+      - it
+      - cyber
+      - cybersecurity
+      - startup
+      - innovation
+      - artificial intelligence
+      - ai
+      - machine learning
+      - data center
+      - cloud
+      - semiconductor
+      - electronics
+      - digital india
+      - e-governance
+      - fintech
+
+  pharma_healthcare:
+    name: "Pharma & Healthcare"
+    stocks:
+      - SUNPHARMA
+      - DRREDDY
+      - CIPLA
+      - DIVISLAB
+      - APOLLOHOSP
+      - FORTIS
+      - MAXHEALTH
+      - LUPIN
+      - AUROPHARMA
+      - BIOCON
+      - TORNTPHARM
+      - ZYDUSLIFE
+      - ALKEM
+      - IPCALAB
+      - GLENMARK
+      - NATCOPHARM
+      - LAURUSLABS
+      - LALPATHLAB
+      - METROPOLIS
+      - GRANULES
+      - AJANTPHARM
+      - JBCHEPHARM
+      - GLAND
+      - SYNGENE
+      - PFIZER
+      - GLAXO
+      - ABBOTINDIA
+      - ASTRAZEN
+      - MANKIND
+      - EMCURE
+      - KIMS
+      - NH
+      - MEDANTA
+      - ASTERDM
+      - ERIS
+    keywords:
+      - health
+      - healthcare
+      - medicine
+      - pharma
+      - pharmaceutical
+      - hospital
+      - ayush
+      - medical
+      - drug
+      - generic
+      - api
+      - clinical
+      - vaccine
+      - ayushman bharat
+      - pmjay
+      - medical college
+      - asha
+      - anganwadi
+      - nutrition
+
+  metals_mining:
+    name: "Metals & Mining"
+    stocks:
+      - TATASTEEL
+      - HINDALCO
+      - JSWSTEEL
+      - VEDL
+      - COALINDIA
+      - NMDC
+      - HINDCOPPER
+      - NATIONALUM
+      - HINDZINC
+      - SAIL
+      - JINDALSTEL
+      - APLAPOLLO
+      - RATNAMANI
+      - JINDALSAW
+      - WELCORP
+      - GPIL
+      - JSL
+      - SHYAMMETL
+      - GRAVITA
+      - NSLNISP
+    keywords:
+      - steel
+      - iron
+      - aluminum
+      - aluminium
+      - mining
+      - minerals
+      - metal
+      - ore
+      - copper
+      - zinc
+      - coal
+      - critical minerals
+      - lithium
+      - rare earth
+      - production linked incentive
+      - pli
+
+  fmcg:
+    name: "FMCG"
+    stocks:
+      - HINDUNILVR
+      - ITC
+      - NESTLEIND
+      - BRITANNIA
+      - DABUR
+      - MARICO
+      - GODREJCP
+      - COLPAL
+      - EMAMILTD
+      - TATACONSUM
+      - VBL
+      - RADICO
+      - UBL
+      - UNITDSPR
+      - JYOTHYLAB
+      - BIKAJI
+      - PATANJALI
+      - GODFRYPHLP
+      - BATAINDIA
+      - TITAN
+      - PAGEIND
+    keywords:
+      - consumer
+      - fmcg
+      - food
+      - beverage
+      - retail
+      - consumption
+      - gst
+      - excise
+      - tobacco
+      - liquor
+
+  auto:
+    name: "Automobile"
+    stocks:
+      - MARUTI
+      - TATAMOTORS
+      - M&M
+      - BAJAJ-AUTO
+      - HEROMOTOCO
+      - TVSMOTOR
+      - EICHERMOT
+      - ASHOKLEY
+      - ESCORTS
+      - BHARATFORG
+      - MOTHERSON
+      - BOSCHLTD
+      - EXIDEIND
+      - APOLLOTYRE
+      - MRF
+      - CEATLTD
+      - BALKRISIND
+      - UNOMINDA
+      - SONACOMS
+      - ENDURANCE
+      - SUNDRMFAST
+      - SCHAEFFLER
+      - SKFINDIA
+      - TIMKEN
+      - TIINDIA
+    keywords:
+      - automobile
+      - vehicle
+      - ev
+      - electric vehicle
+      - car
+      - two wheeler
+      - scrappage
+      - auto
+      - battery
+      - charging
+      - fame
+      - hybrid
+      - emission norms
+      - bs6
+
+  realty:
+    name: "Real Estate"
+    stocks:
+      - DLF
+      - GODREJPROP
+      - OBEROIRLTY
+      - PRESTIGE
+      - BRIGADE
+      - LODHA
+      - SOBHA
+      - PHOENIXLTD
+      - ANANTRAJ
+      - DBREALTY
+      - INDHOTEL
+      - LEMONTREE
+      - CHALET
+      - EIHOTEL
+      - HUDCO
+      - LICHSGFIN
+      - PNBHOUSING
+      - CANFINHOME
+      - AAVAS
+      - APTUS
+      - HOMEFIRST
+    keywords:
+      - real estate
+      - housing
+      - affordable housing
+      - property
+      - reit
+      - pmay
+      - pradhan mantri awas
+      - home loan
+      - stamp duty
+      - registration
+      - smart city
+      - urban development
+      - amrut
+
+  cement:
+    name: "Cement"
+    stocks:
+      - ULTRACEMCO
+      - SHREECEM
+      - AMBUJACEM
+      - ACC
+      - RAMCOCEM
+      - DALBHARAT
+      - JKCEMENT
+      - INDIACEM
+      - GRASIM
+      - APLAPOLLO
+      - ASTRAL
+      - SUPREMEIND
+      - PIDILITIND
+      - BERGEPAINT
+      - ASIANPAINT
+      - KAJARIACER
+      - CERA
+      - CENTURYPLY
+      - CARBORUNIV
+      - VGUARD
+    keywords:
+      - cement
+      - construction material
+      - clinker
+      - limestone
+      - building material
+
+  defence:
+    name: "Defence"
+    stocks:
+      - HAL
+      - BEL
+      - BDL
+      - MAZDOCK
+      - GRSE
+      - COCHINSHIP
+      - BEML
+      - DATAPATTNS
+      - BHEL
+      - BHARATFORG
+      - AIAENG
+      - ELECON
+      - APARINDS
+      - KIRLOSBROS
+      - CUMMINSIND
+      - SIEMENS
+      - ABB
+      - THERMAX
+      - LT
+      - TITAGARH
+    keywords:
+      - defence
+      - defense
+      - military
+      - aerospace
+      - naval
+      - army
+      - navy
+      - air force
+      - ammunition
+      - missile
+      - warship
+      - fighter
+      - make in india
+      - fdi defence
+      - ordnance
+
+  agriculture:
+    name: "Agriculture"
+    stocks:
+      - UPL
+      - PIIND
+      - COROMANDEL
+      - CHAMBLFERT
+      - GNFC
+      - RCF
+      - DEEPAKFERT
+      - FACT
+      - RALLIS
+      - DHANUKA
+      - SUMICHEM
+      - GODREJAGRO
+      - EIDPARRY
+      - BALRAMCHIN
+      - RENUKA
+      - DALMIA
+      - KRBL
+      - LTFOODS
+      - AWL
+    keywords:
+      - agriculture
+      - farm
+      - farmer
+      - fertilizer
+      - fertiliser
+      - crop
+      - msp
+      - minimum support price
+      - kisan
+      - pm kisan
+      - irrigation
+      - seeds
+      - pesticide
+      - cold storage
+      - food processing
+      - agri
+      - rural
+      - nabard
+      - kcc
+      - crop insurance
