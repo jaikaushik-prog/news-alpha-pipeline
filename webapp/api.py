@@ -705,24 +705,31 @@ def calculate_trinity_score(sector: str, sentiment: float, news_count: int, tota
     }
 
 
+# ============== NER LAYER (Always Available) ==============
+try:
+    from src.nlp.ner import extract_companies, get_company_name, COMPANY_ALIASES
+    print(f"NER Layer loaded successfully with {len(COMPANY_ALIASES)} company aliases")
+except ImportError as e:
+    print(f"NER Layer unavailable: {e}")
+    def extract_companies(text): return []
+    def get_company_name(sym): return sym
+    COMPANY_ALIASES = {}
+
 # ============== SEMANTIC LAYER ==============
 try:
     from src.nlp.embeddings import get_embeddings
     from src.nlp.surprise_score import SurpriseModel
     from src.models.sector_attribution import SectorAttributionModel
-    from src.nlp.ner import extract_companies, get_company_name
     SEMANTIC_LAYER_AVAILABLE = True
     surprise_model = SurpriseModel(memory_window=200)
     attribution_model = SectorAttributionModel()
-    print("Semantic Layer (Surprise + Attribution + NER) initialized successfully")
+    print("Semantic Layer (Surprise + Attribution) initialized successfully")
 except ImportError as e:
     print(f"Semantic Layer unavailable: {e}")
     SEMANTIC_LAYER_AVAILABLE = False
     surprise_model = None
     attribution_model = None
-    # Dummy NER if unavailable
-    def extract_companies(text): return []
-    def get_company_name(sym): return sym
+
 
 # ============== ANALYTICS UTILS ==============
 def generate_word_cloud(headlines: List[str]) -> List[Dict]:
@@ -911,6 +918,10 @@ def run_live_analysis() -> Dict:
     # Word Cloud
     word_cloud = generate_word_cloud([h['headline'] for h in all_headlines])
     
+    print(f"DEBUG: Found {len(top_stocks)} stocks and {len(word_cloud)} word cloud items")
+    if top_stocks:
+        print(f"DEBUG Top Stock: {top_stocks[0]}")
+    
     sector_signals.sort(key=lambda x: abs(x['trinity_score']), reverse=True)
     
     effective_sentiment = sum(s['sentiment'] * s['news_count'] for s in sector_signals) / max(1, total_sector_news) if sector_signals else 0
@@ -945,6 +956,20 @@ def run_live_analysis() -> Dict:
 class AnalysisRequest(BaseModel):
     max_headlines: int = 100
     max_age_hours: int = 24
+
+
+@app.get("/debug/ner")
+def debug_ner():
+    """Debug endpoint to test NER extraction"""
+    test_headline = "TCS and Infosys report earnings while Nifty 50 drops"
+    companies = extract_companies(test_headline)
+    return {
+        "headline": test_headline,
+        "extracted": companies,
+        "version": "3.2",
+        "aliases_count": len(COMPANY_ALIASES),
+        "indices_working": 'NIFTY50' in companies
+    }
 
 
 @app.get("/", response_class=HTMLResponse)

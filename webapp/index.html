@@ -547,10 +547,10 @@
         .word-cloud {
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 1.5rem;
             justify-content: center;
-            padding: 1.5rem;
-            height: 350px;
+            padding: 2rem;
+            height: 500px;
             overflow-y: auto;
             align-content: center;
             background: linear-gradient(180deg, rgba(26, 32, 44, 0) 0%, rgba(0, 0, 0, 0.2) 100%);
@@ -561,15 +561,16 @@
             display: inline-block;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
-            padding: 0.25rem 0.5rem;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            letter-spacing: 0.02em;
+            padding: 0.4rem 0.8rem;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            letter-spacing: 0.03em;
+            font-weight: 600;
         }
 
         .cloud-tag:hover {
             color: #fff !important;
-            transform: scale(1.15) translateY(-2px);
-            text-shadow: 0 0 8px currentColor;
+            transform: scale(1.2) translateY(-3px);
+            text-shadow: 0 0 12px currentColor, 0 0 20px currentColor;
             z-index: 10;
         }
 
@@ -731,20 +732,7 @@
 
         <!-- Analytics Row -->
         <div class="main-grid" style="margin-top: 1.5rem;">
-            <!-- Top Stocks -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">🏢 Top Active Stocks</span>
-                </div>
-                <div class="card-body">
-                    <div id="topStocksList" style="min-height: 200px;">
-                        <div style="padding: 1rem; text-align: center; color: var(--text-muted);">Run analysis to see
-                            data</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Word Cloud -->
+            <!-- Word Cloud (Now on LEFT and BIGGER) -->
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">☁️ Trending Topics</span>
@@ -753,6 +741,19 @@
                     <div id="wordCloudContainer" class="word-cloud">
                         <div style="text-align: center; color: var(--text-muted); width: 100%;">Run analysis to see data
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Stocks (Now on RIGHT) -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🏢 Top Active Stocks</span>
+                </div>
+                <div class="card-body">
+                    <div id="topStocksList" style="min-height: 200px;">
+                        <div style="padding: 1rem; text-align: center; color: var(--text-muted);">Run analysis to see
+                            data</div>
                     </div>
                 </div>
             </div>
@@ -874,15 +875,15 @@
             ];
 
             container.innerHTML = shuffled.map(w => {
-                const size = 0.8 + (w.value / 40); // Map 20-100 to ~1.3rem - 3.5rem
+                const size = 1.5 + (w.value / 25); // Map 20-100 to ~2.3rem - 5.5rem (MUCH BIGGER)
                 const color = colors[Math.floor(Math.random() * colors.length)];
-                const opacity = 0.7 + (w.value / 200); // 0.8 to 1.0
+                const opacity = 0.85 + (w.value / 200); // 0.9 to 1.0 (more visible)
 
                 return `<span class="cloud-tag" style="
-                    font-size: ${Math.min(size, 2.5)}rem; 
+                    font-size: ${Math.min(size, 4.5)}rem; 
                     color: ${color}; 
                     opacity: ${opacity};
-                    font-weight: ${w.value > 50 ? 700 : 500}
+                    font-weight: ${w.value > 50 ? 700 : 600}
                 ">${w.text}</span>`;
             }).join('');
         }
