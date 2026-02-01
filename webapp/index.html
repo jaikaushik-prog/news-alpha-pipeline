@@ -541,6 +541,82 @@
             color: var(--accent-teal);
             text-decoration: none;
         }
+
+        /* Word Cloud */
+        .word-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            padding: 1rem;
+            height: 300px;
+            overflow-y: auto;
+            align-content: center;
+        }
+
+        .cloud-tag {
+            display: inline-block;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            padding: 0.1rem 0.3rem;
+            color: var(--text-secondary);
+        }
+
+        .cloud-tag:hover {
+            color: var(--accent-teal);
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        /* Top Stocks */
+        .stock-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .stock-item:last-child {
+            border-bottom: none;
+        }
+
+        .stock-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .stock-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stock-symbol {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stock-name {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .stock-metrics {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .stock-sentiment {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .stock-mentions {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
     </style>
 </head>
 
@@ -647,6 +723,35 @@
                 </div>
             </div>
         </div>
+
+        <!-- Analytics Row -->
+        <div class="main-grid" style="margin-top: 1.5rem;">
+            <!-- Top Stocks -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🏢 Top Active Stocks</span>
+                </div>
+                <div class="card-body">
+                    <div id="topStocksList" style="min-height: 200px;">
+                        <div style="padding: 1rem; text-align: center; color: var(--text-muted);">Run analysis to see
+                            data</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Word Cloud -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">☁️ Trending Topics</span>
+                </div>
+                <div class="card-body">
+                    <div id="wordCloudContainer" class="word-cloud">
+                        <div style="text-align: center; color: var(--text-muted); width: 100%;">Run analysis to see data
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Footer -->
@@ -707,6 +812,49 @@
 
             updateSectorTable(data.sector_signals || []);
             updateRecommendations(data.long_sectors || [], data.short_sectors || [], data.high_conviction || []);
+            updateTopStocks(data.top_stocks || []);
+            updateWordCloud(data.word_cloud || []);
+        }
+
+        function updateTopStocks(stocks) {
+            const container = document.getElementById('topStocksList');
+            if (!stocks.length) {
+                container.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">No stock mentions found</div>';
+                return;
+            }
+
+            let html = '';
+            stocks.forEach(s => {
+                const colorClass = s.sentiment >= 0 ? 'text-green-400' : 'text-red-400';
+                // We'll use inline styles/classes defined in CSS
+                const colorStyle = s.sentiment >= 0 ? 'color: var(--accent-green)' : 'color: var(--accent-red)';
+
+                html += `
+                    <div class="stock-item">
+                        <div class="stock-info">
+                            <span class="stock-symbol">${s.symbol}</span>
+                            <span class="stock-name">${s.name}</span>
+                        </div>
+                        <div class="stock-metrics">
+                            <span class="stock-sentiment" style="${colorStyle}">${s.sentiment > 0 ? '+' : ''}${s.sentiment}</span>
+                            <span class="stock-mentions">${s.mentions} mentions</span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function updateWordCloud(words) {
+            const container = document.getElementById('wordCloudContainer');
+            if (!words.length) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-muted);">No trends found</div>';
+                return;
+            }
+
+            container.innerHTML = words.map(w =>
+                `<span class="cloud-tag" style="font-size: ${w.value}%; opacity: ${0.4 + (w.value / 200)}">${w.text}</span>`
+            ).join('');
         }
 
         // Update Sector Table

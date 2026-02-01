@@ -710,15 +710,61 @@ try:
     from src.nlp.embeddings import get_embeddings
     from src.nlp.surprise_score import SurpriseModel
     from src.models.sector_attribution import SectorAttributionModel
+    from src.nlp.ner import extract_companies, get_company_name
     SEMANTIC_LAYER_AVAILABLE = True
     surprise_model = SurpriseModel(memory_window=200)
     attribution_model = SectorAttributionModel()
-    print("Semantic Layer (Surprise + Attribution) initialized successfully")
+    print("Semantic Layer (Surprise + Attribution + NER) initialized successfully")
 except ImportError as e:
     print(f"Semantic Layer unavailable: {e}")
     SEMANTIC_LAYER_AVAILABLE = False
     surprise_model = None
     attribution_model = None
+    # Dummy NER if unavailable
+    def extract_companies(text): return []
+    def get_company_name(sym): return sym
+
+# ============== ANALYTICS UTILS ==============
+def generate_word_cloud(headlines: List[str]) -> List[Dict]:
+    """Generate frequency map for word cloud"""
+    stop_words = {
+        'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'up', 'about', 
+        'into', 'over', 'after', 'the', 'and', 'a', 'an', 'is', 'are', 'was', 'were',
+        'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'but',
+        'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for',
+        'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before',
+        'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on',
+        'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there',
+        'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
+        'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same',
+        'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should',
+        'now', 'market', 'stocks', 'sensex', 'nifty', 'india', 'share', 'price',
+        'trade', 'trading', 'live', 'updates', 'news', 'today', 'stock', 'shares',
+        'ltd', 'limited', 'corp', 'inc', 'co', 'bse', 'nse', 'gain', 'lose', 'falls', 'rises'
+    }
+    
+    word_freq = {}
+    for text in headlines:
+        # Extract words (3+ chars)
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
+        for word in words:
+            if word not in stop_words and len(word) > 2:
+                word_freq[word] = word_freq.get(word, 0) + 1
+    
+    # Sort by freq
+    sorted_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:50]
+    
+    # Normalize size 10-100
+    if not sorted_words:
+        return []
+        
+    max_freq = sorted_words[0][1]
+    min_freq = sorted_words[-1][1]
+    
+    return [
+        {'text': word, 'value': 10 + ((freq - min_freq) / max(1, max_freq - min_freq)) * 90}
+        for word, freq in sorted_words
+    ]
 
 # ============== MAIN ANALYSIS ==============
 def run_live_analysis() -> Dict:
@@ -749,6 +795,7 @@ def run_live_analysis() -> Dict:
     
     # Analyze each headline
     sector_data = {}
+    company_data = {} # {symbol: {mentions: 0, sentiments: [], surprise: []}}
     
     for idx, h in enumerate(all_headlines):
         h_hash = hashlib.md5(h['headline'].encode()).hexdigest()
@@ -774,12 +821,32 @@ def run_live_analysis() -> Dict:
         keyword_sectors = detect_sectors(h['headline'])
         
         # Merge sectors (Union of Keyword and Semantic)
-        # For keyword sectors, we assign weight 1.0 if not present in semantic
         final_sectors = semantic_sectors.copy()
         for k_sec in keyword_sectors:
             if k_sec != 'general' and k_sec not in final_sectors:
-                final_sectors[k_sec] = 1.0 # High confidence for explicit keyword match
+                final_sectors[k_sec] = 1.0 
         
+        # 3. Company Extraction
+        companies = extract_companies(h['headline'])
+        
+        # Determine Sentiment for this headline
+        # Use 'general' sector sentiment if no specific sector, or avg of sectors
+        sentiment_result = analyze_sentiment_enhanced(
+            h['headline'], 
+            sector=list(final_sectors.keys())[0] if final_sectors else None,
+            position=idx,
+            total=total_headlines
+        )
+        sent_score = sentiment_result['score']
+        
+        # Update Company Data
+        for comp in companies:
+            if comp not in company_data:
+                company_data[comp] = {'mentions': 0, 'sentiments': [], 'surprise': []}
+            company_data[comp]['mentions'] += 1
+            company_data[comp]['sentiments'].append(sent_score)
+            company_data[comp]['surprise'].append(surprise_val)
+
         if not final_sectors:
             continue
 
@@ -787,19 +854,8 @@ def run_live_analysis() -> Dict:
             if sector not in sector_data:
                 sector_data[sector] = {'headlines': [], 'sentiments': [], 'surprise': [], 'count': 0, 'sources': set()}
             
-            # Enhanced sentiment with position weighting
-            sentiment_result = analyze_sentiment_enhanced(
-                h['headline'], 
-                sector=sector, 
-                position=idx, 
-                total=total_headlines
-            )
-            
-            # Weighted contribution? For now, we just add it, but we could scale by 'weight'
-            # Let's count it as a full headline for visibility, but maybe score could be weighted
-            
             sector_data[sector]['headlines'].append(h['headline'])
-            sector_data[sector]['sentiments'].append(sentiment_result['score'])
+            sector_data[sector]['sentiments'].append(sent_score)
             sector_data[sector]['surprise'].append(surprise_val)
             sector_data[sector]['count'] += 1
             sector_data[sector]['sources'].add(h['source'])
@@ -835,24 +891,30 @@ def run_live_analysis() -> Dict:
             'sources': list(data['sources'])[:3],
             'top_headlines': data['headlines'][:3]
         })
+        
+    # Calculate Top Stocks
+    top_stocks = []
+    for symbol, data in company_data.items():
+        avg_sent = sum(data['sentiments']) / len(data['sentiments'])
+        top_stocks.append({
+            'symbol': symbol,
+            'name': get_company_name(symbol),
+            'mentions': data['mentions'],
+            'sentiment': round(avg_sent, 3),
+            'sentiment_color': 'positive' if avg_sent > 0 else 'negative'
+        })
+    
+    # Sort by mentions (activity) then sentiment magnitude
+    top_stocks.sort(key=lambda x: (x['mentions'], abs(x['sentiment'])), reverse=True)
+    top_stocks = top_stocks[:8] # Top 8
+    
+    # Word Cloud
+    word_cloud = generate_word_cloud([h['headline'] for h in all_headlines])
     
     sector_signals.sort(key=lambda x: abs(x['trinity_score']), reverse=True)
     
-    if sector_signals:
-        weighted_sentiment = sum(s['sentiment'] * s['news_count'] for s in sector_signals) / sum(s['news_count'] for s in sector_signals)
-    else:
-        weighted_sentiment = 0
-    
-    if weighted_sentiment > 0.2:
-        regime = 'bullish'
-    elif weighted_sentiment < -0.2:
-        regime = 'bearish'
-    else:
-        regime = 'neutral'
-    
-    long_sectors = [s['sector'] for s in sector_signals if 'long' in s['recommendation']]
-    short_sectors = [s['sector'] for s in sector_signals if 'short' in s['recommendation']]
-    high_conviction = [s['sector'] for s in sector_signals if s['conviction'] == 'high']
+    effective_sentiment = sum(s['sentiment'] * s['news_count'] for s in sector_signals) / max(1, total_sector_news) if sector_signals else 0
+    regime = 'bullish' if effective_sentiment > 0.1 else 'bearish' if effective_sentiment < -0.1 else 'neutral'
     
     all_sources = set()
     for s in sector_signals:
@@ -860,20 +922,22 @@ def run_live_analysis() -> Dict:
     
     return {
         'timestamp': datetime.now().isoformat(),
+        'headlines_analyzed': total_headlines,
+        'effective_sentiment': round(effective_sentiment, 3),
         'regime': regime,
-        'effective_sentiment': round(weighted_sentiment, 3),
         'sector_signals': sector_signals,
-        'long_sectors': long_sectors,
-        'short_sectors': short_sectors,
-        'high_conviction': high_conviction,
-        'headlines_analyzed': len(all_headlines),
+        'long_sectors': [s['sector'] for s in sector_signals if 'long' in s['recommendation']],
+        'short_sectors': [s['sector'] for s in sector_signals if 'short' in s['recommendation']],
+        'high_conviction': [s['sector'] for s in sector_signals if s['conviction'] == 'high'],
+        'top_stocks': top_stocks,
+        'word_cloud': word_cloud,
         'sources': list(all_sources),
         'source_breakdown': {
             'rss_feeds': len(rss_headlines),
             'zerodha_pulse': len(pulse_headlines),
             'google_trends': len(trends_headlines)
         },
-        'analysis_version': '3.1 (VADER + Bigrams + Position Weighting)'
+        'analysis_version': '3.2 (Semantic + NER)'
     }
 
 
