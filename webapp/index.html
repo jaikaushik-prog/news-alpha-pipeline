@@ -574,37 +574,80 @@
             z-index: 10;
         }
 
-        /* Sector Heatmap */
+        /* Sector Heatmap - Professional Gradient Style */
         .heatmap-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.75rem;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
             padding: 1rem;
         }
 
         .heatmap-cell {
-            padding: 1rem;
-            border-radius: 8px;
+            padding: 1.25rem 0.75rem;
+            border-radius: 12px;
             text-align: center;
             font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s ease;
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .heatmap-cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+            pointer-events: none;
         }
 
         .heatmap-cell:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
         }
 
         .heatmap-cell .sector-name {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.08em;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
         }
 
         .heatmap-cell .sentiment-value {
-            font-size: 1.25rem;
-            margin-top: 0.25rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Heatmap color classes */
+        .heatmap-strong-bull {
+            background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+            color: #fff;
+        }
+
+        .heatmap-bull {
+            background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+            color: #fff;
+        }
+
+        .heatmap-neutral {
+            background: linear-gradient(135deg, #374151 0%, #4B5563 100%);
+            color: #9CA3AF;
+        }
+
+        .heatmap-bear {
+            background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+            color: #fff;
+        }
+
+        .heatmap-strong-bear {
+            background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+            color: #fff;
         }
 
         /* News Timeline */
@@ -876,7 +919,7 @@
             <!-- News Timeline -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">Live Headlines</span>
+                    <span class="card-title">Trending Topics</span>
                 </div>
                 <div class="card-body" style="padding: 0;">
                     <div id="newsTimeline" class="news-timeline">
@@ -1042,30 +1085,19 @@
             }
 
             container.innerHTML = signals.map(s => {
-                // Calculate color based on sentiment (-1 to +1)
                 const sentiment = s.sentiment || 0;
-                let bgColor, textColor;
 
-                if (sentiment > 0.3) {
-                    bgColor = 'rgba(72, 187, 120, 0.6)'; // Strong green
-                    textColor = '#fff';
-                } else if (sentiment > 0.1) {
-                    bgColor = 'rgba(72, 187, 120, 0.3)'; // Light green
-                    textColor = '#48BB78';
-                } else if (sentiment < -0.3) {
-                    bgColor = 'rgba(245, 101, 101, 0.6)'; // Strong red
-                    textColor = '#fff';
-                } else if (sentiment < -0.1) {
-                    bgColor = 'rgba(245, 101, 101, 0.3)'; // Light red
-                    textColor = '#F56565';
-                } else {
-                    bgColor = 'rgba(160, 174, 192, 0.3)'; // Neutral gray
-                    textColor = '#A0AEC0';
-                }
+                // Use CSS gradient classes
+                let colorClass;
+                if (sentiment > 0.1) colorClass = 'heatmap-strong-bull';
+                else if (sentiment > 0.02) colorClass = 'heatmap-bull';
+                else if (sentiment < -0.1) colorClass = 'heatmap-strong-bear';
+                else if (sentiment < -0.02) colorClass = 'heatmap-bear';
+                else colorClass = 'heatmap-neutral';
 
                 const sentStr = sentiment >= 0 ? `+${sentiment.toFixed(2)}` : sentiment.toFixed(2);
 
-                return `<div class="heatmap-cell" style="background: ${bgColor}; color: ${textColor};">
+                return `<div class="heatmap-cell ${colorClass}">
                     <div class="sector-name">${s.sector}</div>
                     <div class="sentiment-value">${sentStr}</div>
                 </div>`;

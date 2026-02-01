@@ -836,6 +836,22 @@ def extract_hot_stocks(headlines: List[str]) -> List[Dict]:
         'mahindra': ('M&M', 'Mahindra & Mahindra'),
         'kotak': ('KOTAKBANK', 'Kotak Mahindra Bank'),
         'axis': ('AXISBANK', 'Axis Bank'),
+        # Additional common terms
+        'stock': ('NIFTY50', 'Nifty 50'),
+        'market': ('NIFTY50', 'Nifty 50'),
+        'budget': ('NIFTY50', 'Nifty 50'),
+        'rupee': ('USDINR', 'USD/INR'),
+        'dollar': ('USDINR', 'USD/INR'),
+        'gold': ('GOLD', 'Gold'),
+        'oil': ('CRUDEOIL', 'Crude Oil'),
+        'bank': ('BANKNIFTY', 'Bank Nifty'),
+        'it sector': ('NIFTYIT', 'Nifty IT'),
+        'pharma': ('NIFTYPHARMA', 'Nifty Pharma'),
+        'auto': ('NIFTYAUTO', 'Nifty Auto'),
+        'infra': ('NIFTYINFRA', 'Nifty Infra'),
+        'metal': ('NIFTYMETAL', 'Nifty Metal'),
+        'fmcg': ('NIFTYFMCG', 'Nifty FMCG'),
+        'psu': ('NIFTYPSE', 'Nifty PSE'),
     }
     
     stock_mentions = {}
