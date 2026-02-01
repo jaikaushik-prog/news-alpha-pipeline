@@ -515,8 +515,76 @@ def fetch_zerodha_pulse() -> List[Dict]:
     return headlines[:15]
 
 
+def fetch_single_rss_feed(args) -> List[Dict]:
+    """Fetch headlines from a single RSS feed"""
+    source, feed_url = args
+    headlines = []
+    try:
+        req = urllib.request.Request(
+            feed_url,
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            content = response.read()
+            root = ET.fromstring(content)
+            
+            items = root.findall('.//item') or root.findall('.//{http://www.w3.org/2005/Atom}entry')
+            
+            for item in items[:8]:
+                title = item.find('title') or item.find('{http://www.w3.org/2005/Atom}title')
+                if title is not None and title.text:
+                    text = title.text.strip()
+                    text = re.sub(r'<!\[CDATA\[|\]\]>', '', text)
+                    text = re.sub(r'<[^>]+>', '', text)
+                    text = text.strip()
+                    
+                    if len(text) > 15:
+                        headlines.append({
+                            'headline': text,
+                            'source': source,
+                            'timestamp': datetime.now().isoformat()
+                        })
+    except Exception as e:
+        print(f"Error fetching {feed_url}: {e}")
+    
+    return headlines
+
+
 def fetch_rss_headlines(max_items: int = 100) -> List[Dict]:
-    """Fetch live headlines from all RSS feeds"""
+    """Fetch live headlines from all RSS feeds using concurrent requests"""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    
+    # Prepare all feed URLs with their sources
+    feed_tasks = []
+    for source, feeds in RSS_FEEDS.items():
+        for feed_url in feeds:
+            feed_tasks.append((source, feed_url))
+    
+    all_headlines = []
+    seen = set()
+    
+    # Fetch concurrently with max 10 workers
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(fetch_single_rss_feed, task): task for task in feed_tasks}
+        
+        for future in as_completed(futures, timeout=30):
+            try:
+                results = future.result()
+                for h in results:
+                    h_hash = hashlib.md5(h['headline'].encode()).hexdigest()
+                    if h_hash not in seen:
+                        seen.add(h_hash)
+                        all_headlines.append(h)
+            except Exception as e:
+                print(f"Feed fetch error: {e}")
+                continue
+    
+    print(f"RSS feeds fetched: {len(all_headlines)} headlines from {len(set(h['source'] for h in all_headlines))} sources")
+    return all_headlines[:max_items]
+
+
+def _old_fetch_rss_headlines(max_items: int = 100) -> List[Dict]:
+    """OLD: Sequential fetch - kept for reference"""
     headlines = []
     seen = set()
     
@@ -527,7 +595,7 @@ def fetch_rss_headlines(max_items: int = 100) -> List[Dict]:
                     feed_url,
                     headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
                 )
-                with urllib.request.urlopen(req, timeout=5) as response:
+                with urllib.request.urlopen(req, timeout=10) as response:
                     content = response.read()
                     root = ET.fromstring(content)
                     
