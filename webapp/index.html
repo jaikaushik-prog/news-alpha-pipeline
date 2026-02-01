@@ -523,11 +523,12 @@
         const refreshBtn = document.getElementById('refreshData');
         const statusText = document.getElementById('statusText');
         const sectorTableContainer = document.getElementById('sectorTableContainer');
+        let autoRefreshInterval;
 
-        // Run Analysis
-        runBtn.addEventListener('click', async () => {
+        // Run Analysis (Live)
+        async function runLiveAnalysis() {
             runBtn.disabled = true;
-            statusText.textContent = 'Analyzing...';
+            statusText.textContent = '🔄 Fetching live news...';
             sectorTableContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
             try {
@@ -539,17 +540,20 @@
                 if (!response.ok) throw new Error('Analysis failed');
                 const data = await response.json();
                 updateDashboard(data);
-                statusText.textContent = 'Complete';
+                statusText.textContent = `✅ Live (${data.sources?.join(', ') || 'RSS'})`;
             } catch (error) {
-                statusText.textContent = 'Error - Try Demo';
+                console.error('Live analysis failed:', error);
+                statusText.textContent = '⚠️ Using demo data';
+                loadDemoData();
             } finally {
                 runBtn.disabled = false;
             }
-        });
+        }
 
-        // Load Demo
-        demoBtn.addEventListener('click', async () => {
-            statusText.textContent = 'Loading...';
+        runBtn.addEventListener('click', runLiveAnalysis);
+
+        // Load Demo Data
+        function loadDemoData() {
             const demoData = {
                 timestamp: new Date().toISOString(),
                 regime: 'bullish',
@@ -568,11 +572,16 @@
                 headlines_analyzed: 47
             };
             updateDashboard(demoData);
-            statusText.textContent = 'Demo Loaded';
+            statusText.textContent = '📊 Demo Data';
+        }
+
+        demoBtn.addEventListener('click', () => {
+            statusText.textContent = 'Loading...';
+            loadDemoData();
         });
 
-        // Refresh
-        refreshBtn.addEventListener('click', () => demoBtn.click());
+        // Refresh = Run Live
+        refreshBtn.addEventListener('click', runLiveAnalysis);
 
         // Update Dashboard
         function updateDashboard(data) {
@@ -645,8 +654,19 @@
             document.getElementById('highConvictionList').innerHTML = highConv.length ? highConv.map(s => `<span class="rec-chip high">${s.toUpperCase()}</span>`).join('') : '<span style="color: var(--text-muted)">None</span>';
         }
 
-        // Auto-load demo
-        document.addEventListener('DOMContentLoaded', () => demoBtn.click());
+        // Start auto-refresh every 5 minutes
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => {
+                console.log('Auto-refreshing...');
+                runLiveAnalysis();
+            }, 5 * 60 * 1000); // 5 minutes
+        }
+
+        // On page load: Run live analysis immediately
+        document.addEventListener('DOMContentLoaded', () => {
+            runLiveAnalysis();
+            startAutoRefresh();
+        });
     </script>
 </body>
 
