@@ -69,6 +69,14 @@ COMPANY_ALIASES = {
     'airtel': 'BHARTIARTL', 'bharti airtel': 'BHARTIARTL',
     'geo': 'RELIANCE', # Jio often implies Reliance
     'vodafone': 'IDEA', 'vi': 'IDEA', 'idea': 'IDEA',
+
+    # Indices & Commodities (Treating as "Stocks" for this widget)
+    'nifty': 'NIFTY50', 'nifty 50': 'NIFTY50',
+    'sensex': 'SENSEX', 'bse sensex': 'SENSEX',
+    'bank nifty': 'BANKNIFTY', 'banknifty': 'BANKNIFTY',
+    'gold': 'GOLD',
+    'silver': 'SILVER',
+    'crude': 'CRUDEOIL', 'oil': 'CRUDEOIL',
 }
 
 # Inverted index for reverse lookups (Symbol -> Name)
@@ -92,7 +100,15 @@ SYMBOL_TO_NAME = {
     'HINDUNILVR': 'Hindustan Unilever',
     'LT': 'Larsen & Toubro',
     'BHARTIARTL': 'Bharti Airtel',
+    'NIFTY50': 'Nifty 50 Index',
+    'SENSEX': 'BSE Sensex Index',
+    'BANKNIFTY': 'Bank Nifty Index',
+    'GOLD': 'Gold (Commodity)',
+    'SILVER': 'Silver (Commodity)',
+    'CRUDEOIL': 'Crude Oil',
 }
+
+
 
 def extract_companies(text: str) -> List[str]:
     """

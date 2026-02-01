@@ -738,8 +738,8 @@ def generate_word_cloud(headlines: List[str]) -> List[Dict]:
         'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
         'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same',
         'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should',
-        'now', 'market', 'stocks', 'sensex', 'nifty', 'india', 'share', 'price',
-        'trade', 'trading', 'live', 'updates', 'news', 'today', 'stock', 'shares',
+        'now', 'india', 'share', 'price', 
+        'live', 'updates', 'today', 
         'ltd', 'limited', 'corp', 'inc', 'co', 'bse', 'nse', 'gain', 'lose', 'falls', 'rises'
     }
     
