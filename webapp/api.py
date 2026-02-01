@@ -730,6 +730,25 @@ except ImportError as e:
     surprise_model = None
     attribution_model = None
 
+# ============== LIVE DATA LAYER ==============
+try:
+    from src.data.price_fetcher import enrich_stocks_with_prices, get_stock_price
+    PRICE_FETCHER_AVAILABLE = True
+    print("Price Fetcher (yfinance) loaded successfully")
+except ImportError as e:
+    print(f"Price Fetcher unavailable: {e}")
+    PRICE_FETCHER_AVAILABLE = False
+    def enrich_stocks_with_prices(stocks): return stocks
+    def get_stock_price(symbol): return None
+
+try:
+    from src.social.reddit_scraper import get_reddit_sentiment
+    REDDIT_AVAILABLE = True
+    print("Reddit Scraper (PRAW) loaded successfully")
+except ImportError as e:
+    print(f"Reddit Scraper unavailable: {e}")
+    REDDIT_AVAILABLE = False
+    def get_reddit_sentiment(): return {'available': False, 'error': 'PRAW not installed'}
 
 # ============== ANALYTICS UTILS ==============
 def generate_word_cloud(headlines: List[str]) -> List[Dict]:
@@ -1038,6 +1057,17 @@ def run_live_analysis() -> Dict:
     for s in sector_signals:
         all_sources.update(s.get('sources', []))
     
+    # Enrich stocks with live prices (v4.1)
+    if PRICE_FETCHER_AVAILABLE and top_stocks:
+        try:
+            top_stocks = enrich_stocks_with_prices(top_stocks)
+            print(f"DEBUG: Enriched {len(top_stocks)} stocks with prices")
+        except Exception as e:
+            print(f"Price enrichment failed: {e}")
+    
+    # Get Reddit sentiment (optional)
+    reddit_sentiment = get_reddit_sentiment() if REDDIT_AVAILABLE else {'available': False}
+    
     return {
         'timestamp': datetime.now().isoformat(),
         'headlines_analyzed': total_headlines,
@@ -1051,13 +1081,14 @@ def run_live_analysis() -> Dict:
         'high_conviction': [s['sector'] for s in sector_signals if s['conviction'] == 'high'],
         'top_stocks': top_stocks,
         'word_cloud': word_cloud,
+        'reddit_sentiment': reddit_sentiment,
         'sources': list(all_sources),
         'source_breakdown': {
             'rss_feeds': len(rss_headlines),
             'zerodha_pulse': len(pulse_headlines),
             'google_trends': len(trends_headlines)
         },
-        'analysis_version': '4.0 (AI Summary + Timeline)'
+        'analysis_version': '4.1 (Live Prices + Reddit)'
     }
 
 

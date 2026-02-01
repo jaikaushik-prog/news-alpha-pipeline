@@ -964,9 +964,9 @@
 
             let html = '';
             stocks.forEach(s => {
-                const colorClass = s.sentiment >= 0 ? 'text-green-400' : 'text-red-400';
-                const colorStyle = s.sentiment >= 0 ? 'color: var(--accent-green)' : 'color: var(--accent-red)';
-                const sentimentBg = s.sentiment >= 0 ? 'rgba(72, 187, 120, 0.1)' : 'rgba(252, 129, 129, 0.1)';
+                const hasPrice = s.price !== null && s.price !== undefined;
+                const changeColor = s.change_pct >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+                const changeSign = s.change_pct >= 0 ? '+' : '';
 
                 html += `
                     <div class="stock-item">
@@ -974,11 +974,13 @@
                             <span class="stock-symbol">${s.symbol}</span>
                             <span class="stock-name">${s.name}</span>
                         </div>
-                        <div class="stock-metrics">
-                            <span class="stock-sentiment" style="${colorStyle}; background: ${sentimentBg}; padding: 2px 8px; border-radius: 4px;">
-                                ${s.sentiment > 0 ? '+' : ''}${s.sentiment}
-                            </span>
-                            <span class="stock-mentions" style="margin-top: 4px;">${s.mentions} mentions</span>
+                        <div class="stock-metrics" style="text-align: right;">
+                            ${hasPrice ? `
+                                <div style="font-weight: 600; font-size: 1.1rem;">₹${s.price.toLocaleString()}</div>
+                                <div style="color: ${changeColor}; font-size: 0.85rem;">${changeSign}${s.change_pct}%</div>
+                            ` : `
+                                <span style="color: var(--text-muted); font-size: 0.8rem;">${s.mentions} mentions</span>
+                            `}
                         </div>
                     </div>
                 `;
