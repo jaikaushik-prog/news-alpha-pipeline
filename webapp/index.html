@@ -550,7 +550,7 @@
             gap: 1.5rem;
             justify-content: center;
             padding: 2rem;
-            height: 500px;
+            height: 300px;
             overflow-y: auto;
             align-content: center;
             background: linear-gradient(180deg, rgba(26, 32, 44, 0) 0%, rgba(0, 0, 0, 0.2) 100%);
@@ -732,20 +732,7 @@
 
         <!-- Analytics Row -->
         <div class="main-grid" style="margin-top: 1.5rem;">
-            <!-- Word Cloud (Now on LEFT and BIGGER) -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">Trending Topics</span>
-                </div>
-                <div class="card-body">
-                    <div id="wordCloudContainer" class="word-cloud">
-                        <div style="text-align: center; color: var(--text-muted); width: 100%;">Run analysis to see data
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Top Stocks (Now on RIGHT) -->
+            <!-- Top Stocks (PRIMARY - LEFT) -->
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Top Active Stocks</span>
@@ -754,6 +741,19 @@
                     <div id="topStocksList" style="min-height: 200px;">
                         <div style="padding: 1rem; text-align: center; color: var(--text-muted);">Run analysis to see
                             data</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Word Cloud (SECONDARY - RIGHT) -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Trending Topics</span>
+                </div>
+                <div class="card-body">
+                    <div id="wordCloudContainer" class="word-cloud">
+                        <div style="text-align: center; color: var(--text-muted); width: 100%;">Run analysis to see data
+                        </div>
                     </div>
                 </div>
             </div>
