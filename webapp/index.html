@@ -697,7 +697,7 @@
             <!-- Sector Table -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">📈 Sector Analysis</span>
+                    <span class="card-title">Sector Analysis</span>
                     <span class="regime-badge regime-neutral" id="regimeBadge">NEUTRAL</span>
                 </div>
                 <div class="card-body" id="sectorTableContainer">
@@ -710,19 +710,19 @@
             <!-- Recommendations -->
             <div class="card recommendations-card">
                 <div class="card-header">
-                    <span class="card-title">💰 Recommendations</span>
+                    <span class="card-title">Recommendations</span>
                 </div>
                 <div class="card-body">
                     <div class="rec-section">
-                        <div class="rec-title">🟢 Long Positions</div>
+                        <div class="rec-title">Long Positions</div>
                         <div class="rec-list" id="longList"><span style="color: var(--text-muted)">--</span></div>
                     </div>
                     <div class="rec-section">
-                        <div class="rec-title">🔴 Short Positions</div>
+                        <div class="rec-title">Short Positions</div>
                         <div class="rec-list" id="shortList"><span style="color: var(--text-muted)">--</span></div>
                     </div>
                     <div class="rec-section">
-                        <div class="rec-title">⭐ High Conviction</div>
+                        <div class="rec-title">High Conviction</div>
                         <div class="rec-list" id="highConvictionList"><span style="color: var(--text-muted)">--</span>
                         </div>
                     </div>
@@ -735,7 +735,7 @@
             <!-- Word Cloud (Now on LEFT and BIGGER) -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">☁️ Trending Topics</span>
+                    <span class="card-title">Trending Topics</span>
                 </div>
                 <div class="card-body">
                     <div id="wordCloudContainer" class="word-cloud">
@@ -748,7 +748,7 @@
             <!-- Top Stocks (Now on RIGHT) -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">🏢 Top Active Stocks</span>
+                    <span class="card-title">Top Active Stocks</span>
                 </div>
                 <div class="card-body">
                     <div id="topStocksList" style="min-height: 200px;">
@@ -901,8 +901,6 @@
                 <th>Sector</th><th>Sentiment</th><th>Score</th><th>Signal</th><th>Conviction</th>
             </tr></thead><tbody>`;
 
-            const icons = { banking: '🏦', it: '💻', pharma: '💊', auto: '🚗', metals: '⚙️', infra: '🏗️', fmcg: '🛒', energy: '⚡', telecom: '📡' };
-
             signals.forEach(s => {
                 const scoreColor = s.trinity_score >= 0 ? 'positive' : 'negative';
                 const scoreWidth = Math.min(100, Math.abs(s.trinity_score) * 100);
@@ -911,7 +909,7 @@
                 const dots = [0, 1, 2].map(i => `<span class="conviction-dot ${i < level ? 'active' : ''}"></span>`).join('');
 
                 html += `<tr>
-                    <td><span class="sector-name">${icons[s.sector] || '📊'} ${s.sector.toUpperCase()}</span></td>
+                    <td><span class="sector-name">${s.sector.toUpperCase()}</span></td>
                     <td style="color: ${s.sentiment >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
                         ${s.sentiment >= 0 ? '+' : ''}${s.sentiment.toFixed(2)}
                     </td>

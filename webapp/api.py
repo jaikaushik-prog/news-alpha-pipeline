@@ -773,7 +773,60 @@ def generate_word_cloud(headlines: List[str]) -> List[Dict]:
         for word, freq in sorted_words
     ]
 
+def extract_hot_stocks(headlines: List[str]) -> List[Dict]:
+    """
+    Extract most mentioned stocks from headlines using simple keyword matching.
+    Returns list of {symbol, name, mentions}
+    """
+    # Simple keyword to symbol mapping (most common Indian stocks)
+    stock_keywords = {
+        'tcs': ('TCS', 'Tata Consultancy Services'),
+        'infosys': ('INFY', 'Infosys'),
+        'reliance': ('RELIANCE', 'Reliance Industries'),
+        'hdfc': ('HDFCBANK', 'HDFC Bank'),
+        'icici': ('ICICIBANK', 'ICICI Bank'),
+        'sbi': ('SBIN', 'State Bank of India'),
+        'wipro': ('WIPRO', 'Wipro'),
+        'bharti': ('BHARTIARTL', 'Bharti Airtel'),
+        'airtel': ('BHARTIARTL', 'Bharti Airtel'),
+        'adani': ('ADANIENT', 'Adani Enterprises'),
+        'tata motors': ('TATAMOTORS', 'Tata Motors'),
+        'maruti': ('MARUTI', 'Maruti Suzuki'),
+        'nifty': ('NIFTY50', 'Nifty 50'),
+        'sensex': ('SENSEX', 'BSE Sensex'),
+        'itc': ('ITC', 'ITC Ltd'),
+        'bajaj': ('BAJFINANCE', 'Bajaj Finance'),
+        'asian paints': ('ASIANPAINT', 'Asian Paints'),
+        'hul': ('HINDUNILVR', 'Hindustan Unilever'),
+        'larsen': ('LT', 'Larsen & Toubro'),
+        'l&t': ('LT', 'Larsen & Toubro'),
+        'titan': ('TITAN', 'Titan Company'),
+        'mahindra': ('M&M', 'Mahindra & Mahindra'),
+        'kotak': ('KOTAKBANK', 'Kotak Mahindra Bank'),
+        'axis': ('AXISBANK', 'Axis Bank'),
+    }
+    
+    stock_mentions = {}
+    
+    for headline in headlines:
+        headline_lower = headline.lower()
+        for keyword, (symbol, name) in stock_keywords.items():
+            if keyword in headline_lower:
+                if symbol not in stock_mentions:
+                    stock_mentions[symbol] = {'name': name, 'mentions': 0}
+                stock_mentions[symbol]['mentions'] += 1
+    
+    # Convert to list and sort by mentions
+    hot_stocks = [
+        {'symbol': symbol, 'name': data['name'], 'mentions': data['mentions']}
+        for symbol, data in stock_mentions.items()
+    ]
+    hot_stocks.sort(key=lambda x: x['mentions'], reverse=True)
+    
+    return hot_stocks[:10]  # Top 10
+
 # ============== MAIN ANALYSIS ==============
+
 def run_live_analysis() -> Dict:
     """Run full live analysis pipeline with enhanced sentiment and semantic surprise"""
     
@@ -899,21 +952,9 @@ def run_live_analysis() -> Dict:
             'top_headlines': data['headlines'][:3]
         })
         
-    # Calculate Top Stocks
-    top_stocks = []
-    for symbol, data in company_data.items():
-        avg_sent = sum(data['sentiments']) / len(data['sentiments'])
-        top_stocks.append({
-            'symbol': symbol,
-            'name': get_company_name(symbol),
-            'mentions': data['mentions'],
-            'sentiment': round(avg_sent, 3),
-            'sentiment_color': 'positive' if avg_sent > 0 else 'negative'
-        })
-    
-    # Sort by mentions (activity) then sentiment magnitude
-    top_stocks.sort(key=lambda x: (x['mentions'], abs(x['sentiment'])), reverse=True)
-    top_stocks = top_stocks[:8] # Top 8
+        
+    # --- Simple Stock Extraction (Keyword-based) ---
+    top_stocks = extract_hot_stocks([h['headline'] for h in all_headlines])
     
     # Word Cloud
     word_cloud = generate_word_cloud([h['headline'] for h in all_headlines])
