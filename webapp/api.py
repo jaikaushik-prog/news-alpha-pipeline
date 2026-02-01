@@ -750,6 +750,19 @@ except ImportError as e:
     REDDIT_AVAILABLE = False
     def get_reddit_sentiment(): return {'available': False, 'error': 'PRAW not installed'}
 
+# ============== GEMINI AI LAYER ==============
+try:
+    from src.nlp.gemini_summary import get_cached_gemini_summary, initialize_gemini
+    GEMINI_AVAILABLE = initialize_gemini()
+    if GEMINI_AVAILABLE:
+        print("Gemini AI initialized successfully")
+    else:
+        print("Gemini AI: API key not configured, using template fallback")
+except ImportError as e:
+    print(f"Gemini AI unavailable: {e}")
+    GEMINI_AVAILABLE = False
+    def get_cached_gemini_summary(*args, **kwargs): return None
+
 # ============== ANALYTICS UTILS ==============
 def generate_word_cloud(headlines: List[str]) -> List[Dict]:
     """Generate frequency map for word cloud"""
@@ -845,27 +858,38 @@ def extract_hot_stocks(headlines: List[str]) -> List[Dict]:
     return hot_stocks[:10]  # Top 10
 
 
-def generate_ai_summary(sector_signals: List[Dict], top_stocks: List[Dict], regime: str) -> str:
+def generate_ai_summary(sector_signals: List[Dict], top_stocks: List[Dict], regime: str, headlines: List[str] = None) -> str:
     """
     Generate an AI-powered executive summary of the market analysis.
-    Uses template-based generation (no external API needed).
+    Uses Gemini AI when available, falls back to template-based generation.
     """
     if not sector_signals:
         return "Insufficient data for market summary. Run analysis to populate."
     
-    # Find top performing and worst performing sectors
+    # Try Gemini AI first
+    if GEMINI_AVAILABLE:
+        try:
+            gemini_summary = get_cached_gemini_summary(
+                sector_signals, 
+                top_stocks, 
+                regime,
+                headlines
+            )
+            if gemini_summary:
+                return gemini_summary
+        except Exception as e:
+            print(f"Gemini summary failed, using template: {e}")
+    
+    # Fallback: Template-based generation
     sorted_sectors = sorted(sector_signals, key=lambda x: x['sentiment'], reverse=True)
     best_sector = sorted_sectors[0] if sorted_sectors else None
     worst_sector = sorted_sectors[-1] if len(sorted_sectors) > 1 else None
     
-    # Count recommendations
     long_count = sum(1 for s in sector_signals if 'long' in s.get('recommendation', ''))
     short_count = sum(1 for s in sector_signals if 'short' in s.get('recommendation', ''))
     
-    # Build summary
     parts = []
     
-    # Opening line based on regime
     if regime == 'bullish':
         parts.append("Markets show BULLISH momentum today.")
     elif regime == 'bearish':
@@ -873,7 +897,6 @@ def generate_ai_summary(sector_signals: List[Dict], top_stocks: List[Dict], regi
     else:
         parts.append("Markets are trading in a NEUTRAL range today.")
     
-    # Sector highlights
     if best_sector:
         sent_str = f"+{best_sector['sentiment']:.2f}" if best_sector['sentiment'] >= 0 else f"{best_sector['sentiment']:.2f}"
         parts.append(f"{best_sector['sector'].upper()} leads with {sent_str} sentiment.")
@@ -881,12 +904,10 @@ def generate_ai_summary(sector_signals: List[Dict], top_stocks: List[Dict], regi
     if worst_sector and worst_sector['sentiment'] < 0:
         parts.append(f"{worst_sector['sector'].upper()} faces headwinds ({worst_sector['sentiment']:.2f}).")
     
-    # Stock mentions
     if top_stocks:
         top_stock = top_stocks[0]
         parts.append(f"Most active: {top_stock['symbol']} ({top_stock['mentions']} mentions).")
     
-    # Recommendation summary
     if long_count > short_count:
         parts.append(f"Bias: {long_count} long signals vs {short_count} short.")
     elif short_count > long_count:
@@ -1038,8 +1059,9 @@ def run_live_analysis() -> Dict:
     effective_sentiment = sum(s['sentiment'] * s['news_count'] for s in sector_signals) / max(1, total_sector_news) if sector_signals else 0
     regime = 'bullish' if effective_sentiment > 0.1 else 'bearish' if effective_sentiment < -0.1 else 'neutral'
     
-    # Generate AI Summary
-    ai_summary = generate_ai_summary(sector_signals, top_stocks, regime)
+    # Generate AI Summary (Gemini if available, else template)
+    headline_texts = [h['headline'] for h in all_headlines[:10]]
+    ai_summary = generate_ai_summary(sector_signals, top_stocks, regime, headline_texts)
     
     # Prepare headlines for timeline (top 20)
     headlines_timeline = []
@@ -1088,7 +1110,7 @@ def run_live_analysis() -> Dict:
             'zerodha_pulse': len(pulse_headlines),
             'google_trends': len(trends_headlines)
         },
-        'analysis_version': '4.1 (Live Prices + Reddit)'
+        'analysis_version': '4.2 (Gemini AI)'
     }
 
 
