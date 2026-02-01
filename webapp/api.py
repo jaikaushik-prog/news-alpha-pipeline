@@ -16,11 +16,41 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 
+import threading
+import time
+import requests
+
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 app = FastAPI(title="News Alpha Pipeline", version="3.1.0")
+
+# ============== KEEP-ALIVE PINGER ==============
+def run_pinger():
+    """Periodically ping the Render URL to prevent spin-down"""
+    target_url = "https://news-alpha-pipeline.onrender.com/health"
+    print(f"Starting Keep-Alive Pinger for: {target_url}")
+    
+    while True:
+        try:
+            time.sleep(600) # Ping every 10 minutes
+            response = requests.get(target_url, timeout=10)
+            print(f"Keep-Alive Ping: {response.status_code}")
+        except Exception as e:
+            print(f"Keep-Alive Ping Failed: {e}")
+
+# Start pinger in background thread
+# We only want one pinger running, so we check if we are in the main process
+# However, uvicorn reloader might duplicate this. Ideally, this runs on the server.
+# For simplicity, we start it as a daemon thread.
+pinger_thread = threading.Thread(target=run_pinger, daemon=True)
+pinger_thread.start()
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint for pinger"""
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}
 
 # ============== RSS NEWS FEEDS ==============
 import urllib.request
