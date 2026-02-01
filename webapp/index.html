@@ -543,28 +543,33 @@
         }
 
         /* Word Cloud */
+        /* Word Cloud */
         .word-cloud {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 1rem;
             justify-content: center;
-            padding: 1rem;
-            height: 300px;
+            padding: 1.5rem;
+            height: 350px;
             overflow-y: auto;
             align-content: center;
+            background: linear-gradient(180deg, rgba(26, 32, 44, 0) 0%, rgba(0, 0, 0, 0.2) 100%);
+            border-radius: 0 0 8px 8px;
         }
 
         .cloud-tag {
             display: inline-block;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
-            padding: 0.1rem 0.3rem;
-            color: var(--text-secondary);
+            padding: 0.25rem 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.02em;
         }
 
         .cloud-tag:hover {
-            color: var(--accent-teal);
-            transform: scale(1.1);
+            color: #fff !important;
+            transform: scale(1.15) translateY(-2px);
+            text-shadow: 0 0 8px currentColor;
             z-index: 10;
         }
 
@@ -826,8 +831,8 @@
             let html = '';
             stocks.forEach(s => {
                 const colorClass = s.sentiment >= 0 ? 'text-green-400' : 'text-red-400';
-                // We'll use inline styles/classes defined in CSS
                 const colorStyle = s.sentiment >= 0 ? 'color: var(--accent-green)' : 'color: var(--accent-red)';
+                const sentimentBg = s.sentiment >= 0 ? 'rgba(72, 187, 120, 0.1)' : 'rgba(252, 129, 129, 0.1)';
 
                 html += `
                     <div class="stock-item">
@@ -836,8 +841,10 @@
                             <span class="stock-name">${s.name}</span>
                         </div>
                         <div class="stock-metrics">
-                            <span class="stock-sentiment" style="${colorStyle}">${s.sentiment > 0 ? '+' : ''}${s.sentiment}</span>
-                            <span class="stock-mentions">${s.mentions} mentions</span>
+                            <span class="stock-sentiment" style="${colorStyle}; background: ${sentimentBg}; padding: 2px 8px; border-radius: 4px;">
+                                ${s.sentiment > 0 ? '+' : ''}${s.sentiment}
+                            </span>
+                            <span class="stock-mentions" style="margin-top: 4px;">${s.mentions} mentions</span>
                         </div>
                     </div>
                 `;
@@ -852,9 +859,32 @@
                 return;
             }
 
-            container.innerHTML = words.map(w =>
-                `<span class="cloud-tag" style="font-size: ${w.value}%; opacity: ${0.4 + (w.value / 200)}">${w.text}</span>`
-            ).join('');
+            // Shuffle words for better visual distribution
+            const shuffled = words.sort(() => 0.5 - Math.random());
+
+            // Vibrant palette
+            const colors = [
+                '#38B2AC', // Teal
+                '#4299E1', // Blue
+                '#9F7AEA', // Purple
+                '#F687B3', // Pink
+                '#D69E2E', // Gold
+                '#48BB78', // Green
+                '#E2E8F0', // White/Grey
+            ];
+
+            container.innerHTML = shuffled.map(w => {
+                const size = 0.8 + (w.value / 40); // Map 20-100 to ~1.3rem - 3.5rem
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const opacity = 0.7 + (w.value / 200); // 0.8 to 1.0
+
+                return `<span class="cloud-tag" style="
+                    font-size: ${Math.min(size, 2.5)}rem; 
+                    color: ${color}; 
+                    opacity: ${opacity};
+                    font-weight: ${w.value > 50 ? 700 : 500}
+                ">${w.text}</span>`;
+            }).join('');
         }
 
         // Update Sector Table
