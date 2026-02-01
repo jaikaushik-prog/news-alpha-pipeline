@@ -38,6 +38,19 @@ NSE_SYMBOL_MAP = {
     'M&M': 'M&M.NS',
     'KOTAKBANK': 'KOTAKBANK.NS',
     'AXISBANK': 'AXISBANK.NS',
+    # Indicies
+    'BANKNIFTY': '^NSEBANK',
+    'NIFTYIT': '^CNXIT',
+    'NIFTYAUTO': '^CNXAUTO',
+    'NIFTYPHARMA': '^CNXPHARMA',
+    'NIFTYFMCG': '^CNXFMCG',
+    'NIFTYMETAL': '^CNXMETAL',
+    'NIFTYINFRA': '^CNXINFRA',
+    'NIFTYPSE': '^CNXPSE',
+    # Commodities & Forex
+    'USDINR': 'INR=X',
+    'GOLD': 'GC=F',
+    'CRUDEOIL': 'CL=F',
 }
 
 # Cache prices for 5 minutes to avoid rate limiting

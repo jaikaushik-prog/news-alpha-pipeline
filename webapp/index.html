@@ -299,8 +299,10 @@
         /* Main Layout */
         .main-grid {
             display: grid;
-            grid-template-columns: 1fr 320px;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 1.5rem;
+            margin-bottom: 2rem;
+            align-items: start;
         }
 
         @media (max-width: 1024px) {
@@ -888,15 +890,15 @@
                 </div>
             </div>
 
-            <!-- Word Cloud (SECONDARY - RIGHT) -->
+            <!-- News Timeline (SECONDARY - RIGHT) -->
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Trending Topics</span>
                 </div>
-                <div class="card-body">
-                    <div id="wordCloudContainer" class="word-cloud">
-                        <div style="text-align: center; color: var(--text-muted); width: 100%;">Run analysis to see data
-                        </div>
+                <div class="card-body" style="padding: 0;">
+                    <div id="newsTimeline" class="news-timeline">
+                        <div style="padding: 1rem; text-align: center; color: var(--text-muted);">Run analysis to see
+                            headlines</div>
                     </div>
                 </div>
             </div>
@@ -916,15 +918,15 @@
                 </div>
             </div>
 
-            <!-- News Timeline -->
+            <!-- Word Cloud (Bottom) -->
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">Trending Topics</span>
+                    <span class="card-title">Market Keywords</span>
                 </div>
-                <div class="card-body" style="padding: 0;">
-                    <div id="newsTimeline" class="news-timeline">
-                        <div style="padding: 1rem; text-align: center; color: var(--text-muted);">Run analysis to see
-                            headlines</div>
+                <div class="card-body">
+                    <div id="wordCloudContainer" class="word-cloud">
+                        <div style="text-align: center; color: var(--text-muted); width: 100%;">Run analysis to see data
+                        </div>
                     </div>
                 </div>
             </div>
@@ -998,6 +1000,7 @@
             updateNewsTimeline(data.headlines || []);
         }
 
+        // Update Top Stocks with Industry & Price
         function updateTopStocks(stocks) {
             const container = document.getElementById('topStocksList');
             if (!stocks.length) {
@@ -1005,24 +1008,48 @@
                 return;
             }
 
+            // Industry mapping for context
+            const stockIndustries = {
+                'TCS': 'IT Services', 'INFY': 'IT Services', 'WIPRO': 'IT Services',
+                'RELIANCE': 'Energy/Retail', 'ADANIENT': 'Diversified',
+                'HDFCBANK': 'Banking', 'ICICIBANK': 'Banking', 'SBIN': 'PSU Bank', 'KOTAKBANK': 'Banking',
+                'TATAMOTORS': 'Auto', 'MARUTI': 'Auto', 'M&M': 'Auto',
+                'ITC': 'FMCG', 'HINDUNILVR': 'FMCG',
+                'LT': 'Infra', 'TITAN': 'Consumer',
+                'NIFTY50': 'Index', 'BANKNIFTY': 'Index', 'SENSEX': 'Index',
+                'GOLD': 'Commodity', 'USDINR': 'Forex', 'CRUDEOIL': 'Commodity'
+            };
+
             let html = '';
             stocks.forEach(s => {
                 const hasPrice = s.price !== null && s.price !== undefined;
-                const changeColor = s.change_pct >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-                const changeSign = s.change_pct >= 0 ? '+' : '';
+                const changePct = s.change_pct || 0;
+                const changeColor = changePct >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+                const changeSign = changePct >= 0 ? '+' : '';
+                const industry = stockIndustries[s.symbol] || 'Market';
+
+                // Industry badge style
+                const indColor = 'var(--text-muted)';
 
                 html += `
-                    <div class="stock-item">
+                    <div class="stock-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0;">
                         <div class="stock-info">
-                            <span class="stock-symbol">${s.symbol}</span>
-                            <span class="stock-name">${s.name}</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="stock-symbol" style="font-weight: 700; font-size: 1rem;">${s.symbol}</span>
+                                <span style="font-size: 0.7rem; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; color: ${indColor}; text-transform: uppercase;">${industry}</span>
+                            </div>
+                            <span class="stock-name" style="font-size: 0.85rem; opacity: 0.7;">${s.name}</span>
                         </div>
                         <div class="stock-metrics" style="text-align: right;">
                             ${hasPrice ? `
-                                <div style="font-weight: 600; font-size: 1.1rem;">₹${s.price.toLocaleString()}</div>
-                                <div style="color: ${changeColor}; font-size: 0.85rem;">${changeSign}${s.change_pct}%</div>
+                                <div style="font-weight: 600; font-size: 1.1rem; letter-spacing: 0.5px;">₹${s.price.toLocaleString()}</div>
+                                <div style="color: ${changeColor}; font-size: 0.85rem; font-weight: 500;">
+                                    ${changeSign}${changePct}%
+                                    <span style="font-size: 0.8em;">${changePct >= 0 ? '▲' : '▼'}</span>
+                                </div>
                             ` : `
-                                <span style="color: var(--text-muted); font-size: 0.8rem;">${s.mentions} mentions</span>
+                                <div style="font-weight: 600; font-size: 1rem;">${s.mentions}</div>
+                                <span style="color: var(--text-muted); font-size: 0.75rem;">mentions</span>
                             `}
                         </div>
                     </div>
