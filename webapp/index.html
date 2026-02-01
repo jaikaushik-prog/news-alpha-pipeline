@@ -234,9 +234,9 @@
         }
 
         .card-title {
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 1.125rem;
-            font-weight: 600;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -275,8 +275,8 @@
         }
 
         .stat-value {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 2rem;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 2.25rem;
             font-weight: 700;
             margin-bottom: 0.25rem;
         }
@@ -586,10 +586,8 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z" />
                 </svg>
-                Analyse Now
+                Run Live Analysis
             </button>
-            <button class="btn btn-secondary" id="loadDemo">📊 Demo Data</button>
-            <button class="btn btn-secondary" id="refreshData">🔄 Refresh</button>
         </div>
 
         <!-- Stats Row -->
@@ -660,8 +658,6 @@
     <script>
         const API_BASE = '';
         const runBtn = document.getElementById('runAnalysis');
-        const demoBtn = document.getElementById('loadDemo');
-        const refreshBtn = document.getElementById('refreshData');
         const statusText = document.getElementById('statusText');
         const sectorTableContainer = document.getElementById('sectorTableContainer');
         let autoRefreshInterval;
@@ -684,45 +680,14 @@
                 statusText.textContent = `Live • ${data.headlines_analyzed} headlines`;
             } catch (error) {
                 console.error('Live analysis failed:', error);
-                statusText.textContent = 'Demo Mode';
-                loadDemoData();
+                statusText.textContent = 'Analysis Failed';
+                sectorTableContainer.innerHTML = '<p style="color: var(--accent-red); text-align: center;">Analysis failed. Please ensure the backend is running.</p>';
             } finally {
                 runBtn.disabled = false;
             }
         }
 
         runBtn.addEventListener('click', runLiveAnalysis);
-
-        // Load Demo Data
-        function loadDemoData() {
-            const demoData = {
-                timestamp: new Date().toISOString(),
-                regime: 'bullish',
-                effective_sentiment: 0.35,
-                sector_signals: [
-                    { sector: 'auto', sentiment: 0.45, trinity_score: 0.675, recommendation: 'strong_long', conviction: 'high', rationale: 'Positive surprise; early mover' },
-                    { sector: 'banking', sentiment: 0.65, trinity_score: 0.475, recommendation: 'strong_long', conviction: 'high', rationale: 'Positive surprise' },
-                    { sector: 'it', sentiment: -0.30, trinity_score: -0.475, recommendation: 'strong_short', conviction: 'high', rationale: 'Negative surprise' },
-                    { sector: 'metals', sentiment: -0.40, trinity_score: -0.375, recommendation: 'short', conviction: 'medium', rationale: 'Negative surprise' },
-                    { sector: 'pharma', sentiment: 0.10, trinity_score: 0.304, recommendation: 'long', conviction: 'medium', rationale: 'Modest surprise' },
-                    { sector: 'infra', sentiment: 0.05, trinity_score: 0.060, recommendation: 'hold', conviction: 'low', rationale: 'In-line with expectations' }
-                ],
-                long_sectors: ['auto', 'banking', 'pharma'],
-                short_sectors: ['it', 'metals'],
-                high_conviction: ['auto', 'banking', 'it'],
-                headlines_analyzed: 85
-            };
-            updateDashboard(demoData);
-            statusText.textContent = 'Demo Data';
-        }
-
-        demoBtn.addEventListener('click', () => {
-            statusText.textContent = 'Loading...';
-            loadDemoData();
-        });
-
-        // Refresh = Run Live
-        refreshBtn.addEventListener('click', runLiveAnalysis);
 
         // Update Dashboard
         function updateDashboard(data) {
