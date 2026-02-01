@@ -675,9 +675,21 @@ def calculate_trinity_score(sector: str, sentiment: float, news_count: int, tota
     }
 
 
+# ============== SEMANTIC LAYER ==============
+try:
+    from src.nlp.embeddings import get_embeddings
+    from src.nlp.surprise_score import SurpriseModel
+    SEMANTIC_LAYER_AVAILABLE = True
+    surprise_model = SurpriseModel(memory_window=200)
+    print("Semantic Layer initialized successfully")
+except ImportError as e:
+    print(f"Semantic Layer unavailable: {e}")
+    SEMANTIC_LAYER_AVAILABLE = False
+    surprise_model = None
+
 # ============== MAIN ANALYSIS ==============
 def run_live_analysis() -> Dict:
-    """Run full live analysis pipeline with enhanced sentiment"""
+    """Run full live analysis pipeline with enhanced sentiment and semantic surprise"""
     
     rss_headlines = fetch_rss_headlines(100)
     pulse_headlines = fetch_zerodha_pulse()
@@ -689,16 +701,41 @@ def run_live_analysis() -> Dict:
     if not all_headlines:
         raise HTTPException(status_code=503, detail="No news feeds available")
     
-    # Analyze each headline with enhanced sentiment
+    # Process batch embeddings if available
+    headline_embeddings = {}
+    if SEMANTIC_LAYER_AVAILABLE:
+        try:
+            texts = [h['headline'] for h in all_headlines]
+            embeddings = get_embeddings(texts) # Returns np.array
+            for i, h in enumerate(all_headlines):
+                # Use hash as key
+                h_hash = hashlib.md5(h['headline'].encode()).hexdigest()
+                if i < len(embeddings):
+                   headline_embeddings[h_hash] = embeddings[i]
+        except Exception as e:
+            print(f"Embedding generation failed: {e}")
+    
+    # Analyze each headline with enhanced sentiment + surprise
     sector_data = {}
     for idx, h in enumerate(all_headlines):
         sectors = detect_sectors(h['headline'])
+        h_hash = hashlib.md5(h['headline'].encode()).hexdigest()
+        
+        # Calculate Surprise
+        surprise_data = {'surprise_score': 0.0, 'status': 'disabled'}
+        if SEMANTIC_LAYER_AVAILABLE and h_hash in headline_embeddings:
+            emb = headline_embeddings[h_hash]
+            surprise_data = surprise_model.calculate_surprise(emb)
+            # Update model with this new observation
+            surprise_model.update(emb)
+        
+        h['surprise_score'] = surprise_data['surprise_score']
         
         for sector in sectors:
             if sector == 'general':
                 continue
             if sector not in sector_data:
-                sector_data[sector] = {'headlines': [], 'sentiments': [], 'count': 0, 'sources': set()}
+                sector_data[sector] = {'headlines': [], 'sentiments': [], 'surprise': [], 'count': 0, 'sources': set()}
             
             # Enhanced sentiment with position weighting
             sentiment_result = analyze_sentiment_enhanced(
@@ -710,23 +747,33 @@ def run_live_analysis() -> Dict:
             
             sector_data[sector]['headlines'].append(h['headline'])
             sector_data[sector]['sentiments'].append(sentiment_result['score'])
+            sector_data[sector]['surprise'].append(surprise_data['surprise_score'])
             sector_data[sector]['count'] += 1
             sector_data[sector]['sources'].add(h['source'])
-    
-    total_sector_news = sum(d['count'] for d in sector_data.values())
-    
+            
     # Calculate sector signals
+    total_sector_news = sum(d['count'] for d in sector_data.values())
     sector_signals = []
+    
     for sector, data in sector_data.items():
         if data['count'] == 0:
             continue
             
         avg_sentiment = sum(data['sentiments']) / len(data['sentiments'])
+        avg_surprise = sum(data['surprise']) / len(data['surprise']) if data['surprise'] else 0.0
+        
         trinity = calculate_trinity_score(sector, avg_sentiment, data['count'], total_sector_news)
+        
+        # Boost recommendation if High Surprise + High Sentiment
+        if avg_surprise > 0.7 and abs(avg_sentiment) > 0.3:
+            trinity['rationale'] += "; High Information Novelty"
+            if trinity['conviction'] == 'medium':
+                trinity['conviction'] = 'high'
         
         sector_signals.append({
             'sector': sector,
             'sentiment': round(avg_sentiment, 3),
+            'surprise_score': round(avg_surprise, 3),
             'trinity_score': trinity['trinity_score'],
             'recommendation': trinity['recommendation'],
             'conviction': trinity['conviction'],

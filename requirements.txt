@@ -16,9 +16,9 @@ feedparser>=6.0.0
 requests>=2.31.0
 
 # ML/Transformers (optional - for FinBERT)
-# transformers>=4.35.0
-# torch>=2.0.0
-# sentence-transformers>=2.2.0
+transformers>=4.35.0
+torch>=2.0.0
+sentence-transformers>=2.2.0
 
 # Scientific
 scipy>=1.11.0

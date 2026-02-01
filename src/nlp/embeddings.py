@@ -1,337 +1,180 @@
 """
-Semantic Embeddings & Surprise Score - Layer 3
-
-Financial text embeddings using sentence transformers.
-Calculates surprise/novelty score for each headline.
-
-Surprise_t = Distance(Embedding_t, Mean(Embeddings_{t-N}))
-
-Higher surprise = less priced-in information = more alpha potential
+Semantic Embeddings Layer
+Generates dense vector representations for news headlines using Sentence Transformers.
 """
-
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime, timedelta
-import numpy as np
-import pandas as pd
+import os
+import sys
+import pickle
+import hashlib
+from typing import List, Dict, Union, Optional
 from pathlib import Path
+import numpy as np
+import torch
+from sentence_transformers import SentenceTransformer
 
-from ..utils.logging import get_logger
+# Add project root to path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
-logger = get_logger(__name__)
-
-
-# Model configurations
-EMBEDDING_MODELS = {
-    'finbert': 'ProsusAI/finbert',
-    'minilm': 'sentence-transformers/all-MiniLM-L6-v2',
-    'mpnet': 'sentence-transformers/all-mpnet-base-v2'
-}
-
-DEFAULT_MODEL = 'minilm'  # Good balance of speed and quality
-
-
-class EmbeddingModel:
+class EmbeddingGenerator:
     """
-    Sentence embedding model for financial text.
-    
-    Uses SentenceTransformers for efficient embedding generation.
+    Generates and manages semantic embeddings for text.
+    Includes caching to prevent redundant computation.
     """
     
-    def __init__(self, model_name: str = DEFAULT_MODEL):
+    def __init__(self, model_name: str = 'all-MiniLM-L6-v2', cache_dir: Optional[str] = None):
         """
-        Initialize embedding model.
+        Initialize the embedding generator.
         
-        Parameters
-        ----------
-        model_name : str
-            Model key from EMBEDDING_MODELS or HuggingFace path
+        Args:
+            model_name: Name of the SentenceTransformer model
+            cache_dir: Directory to store embedding cache (default: data/cache/embeddings)
         """
-        self.model_name = EMBEDDING_MODELS.get(model_name, model_name)
-        self.model = None
-        self._dimension = None
-    
-    def _load_model(self):
-        """Lazy load the model."""
-        if self.model is not None:
-            return
+        self.model_name = model_name
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print(f"Initializing EmbeddingGenerator with {model_name} on {self.device}...")
         
-        try:
-            from sentence_transformers import SentenceTransformer
+        self.model = SentenceTransformer(model_name, device=self.device)
+        
+        # Setup cache
+        if cache_dir:
+            self.cache_path = Path(cache_dir)
+        else:
+            self.cache_path = PROJECT_ROOT / 'data' / 'cache' / 'embeddings'
             
-            logger.info(f"Loading embedding model: {self.model_name}")
-            self.model = SentenceTransformer(self.model_name)
+        self.cache_path.mkdir(parents=True, exist_ok=True)
+        self.cache_file = self.cache_path / f"emb_cache_{model_name.replace('/', '_')}.pkl"
+        self.cache = self._load_cache()
+        self._cache_dirty = False
+        
+    def _load_cache(self) -> Dict[str, np.ndarray]:
+        """Load embeddings from disk"""
+        if self.cache_file.exists():
+            try:
+                with open(self.cache_file, 'rb') as f:
+                    return pickle.load(f)
+            except Exception as e:
+                print(f"Error loading cache: {e}")
+                return {}
+        return {}
+        
+    def save_cache(self):
+        """Save embeddings to disk"""
+        if self._cache_dirty:
+            try:
+                with open(self.cache_file, 'wb') as f:
+                    pickle.dump(self.cache, f)
+                self._cache_dirty = False
+                print(f"Saved {len(self.cache)} embeddings to cache")
+            except Exception as e:
+                print(f"Error saving cache: {e}")
+    
+    def _get_hash(self, text: str) -> str:
+        """Generate MD5 hash for text key"""
+        return hashlib.md5(text.encode('utf-8')).hexdigest()
+    
+    def generate(self, texts: Union[str, List[str]]) -> Union[np.ndarray, List[np.ndarray]]:
+        """
+        Generate embeddings for a string or list of strings.
+        
+        Args:
+            texts: Single text string or list of strings
             
-            # Get embedding dimension
-            test_embedding = self.model.encode("test")
-            self._dimension = len(test_embedding)
+        Returns:
+            Numpy array of embeddings
+        """
+        single_input = isinstance(texts, str)
+        if single_input:
+            text_list = [texts]
+        else:
+            text_list = texts
             
-            logger.info(f"Model loaded. Embedding dimension: {self._dimension}")
+        # Clean inputs
+        text_list = [t.strip() for t in text_list if t.strip()]
+        if not text_list:
+            return np.array([])
             
-        except ImportError:
-            logger.error("sentence-transformers not installed. Install with: pip install sentence-transformers")
-            raise
-        except Exception as e:
-            logger.error(f"Error loading model: {e}")
-            raise
-    
-    @property
-    def dimension(self) -> int:
-        """Get embedding dimension."""
-        if self._dimension is None:
-            self._load_model()
-        return self._dimension
-    
-    def encode(self, texts: List[str], batch_size: int = 32) -> np.ndarray:
-        """
-        Encode texts to embeddings.
+        # Check cache
+        embeddings = []
+        to_compute_indices = []
+        to_compute_texts = []
         
-        Parameters
-        ----------
-        texts : list
-            List of texts to encode
-        batch_size : int
-            Batch size for encoding
+        for i, text in enumerate(text_list):
+            h = self._get_hash(text)
+            if h in self.cache:
+                embeddings.append(self.cache[h])
+            else:
+                embeddings.append(None) # Placeholder
+                to_compute_indices.append(i)
+                to_compute_texts.append(text)
+        
+        # Compute missing embeddings
+        if to_compute_texts:
+            print(f"Computing embeddings for {len(to_compute_texts)} new items...")
+            new_embeddings = self.model.encode(to_compute_texts, convert_to_numpy=True)
             
-        Returns
-        -------
-        np.ndarray
-            Embeddings of shape (n_texts, embedding_dim)
-        """
-        self._load_model()
-        
-        embeddings = self.model.encode(
-            texts,
-            batch_size=batch_size,
-            show_progress_bar=len(texts) > 100
-        )
-        
-        return np.array(embeddings)
-    
-    def encode_single(self, text: str) -> np.ndarray:
-        """Encode single text."""
-        return self.encode([text])[0]
-
-
-def calculate_surprise_score(
-    current_embedding: np.ndarray,
-    historical_embeddings: np.ndarray,
-    method: str = 'cosine'
-) -> float:
-    """
-    Calculate surprise/novelty score for a news item.
-    
-    Surprise = Distance from historical centroid
-    
-    Parameters
-    ----------
-    current_embedding : np.ndarray
-        Embedding of current news item
-    historical_embeddings : np.ndarray
-        Embeddings of historical news items (N x dim)
-    method : str
-        Distance method: 'cosine', 'euclidean', 'mahalanobis'
-        
-    Returns
-    -------
-    float
-        Surprise score (higher = more novel)
-    """
-    if len(historical_embeddings) == 0:
-        return 1.0  # First item is maximally surprising
-    
-    # Calculate centroid of historical embeddings
-    centroid = np.mean(historical_embeddings, axis=0)
-    
-    if method == 'cosine':
-        # Cosine distance (1 - cosine similarity)
-        similarity = np.dot(current_embedding, centroid) / (
-            np.linalg.norm(current_embedding) * np.linalg.norm(centroid) + 1e-8
-        )
-        surprise = 1 - similarity
-        
-    elif method == 'euclidean':
-        # Normalized euclidean distance
-        distance = np.linalg.norm(current_embedding - centroid)
-        # Normalize by average historical distance
-        avg_distance = np.mean([
-            np.linalg.norm(emb - centroid) for emb in historical_embeddings
-        ])
-        surprise = distance / (avg_distance + 1e-8)
-        
-    elif method == 'mahalanobis':
-        # Mahalanobis distance (accounts for covariance)
-        try:
-            cov = np.cov(historical_embeddings.T)
-            cov_inv = np.linalg.pinv(cov)
-            diff = current_embedding - centroid
-            surprise = np.sqrt(np.dot(np.dot(diff, cov_inv), diff))
-        except:
-            # Fallback to euclidean
-            surprise = np.linalg.norm(current_embedding - centroid)
-    else:
-        raise ValueError(f"Unknown method: {method}")
-    
-    # Clip to reasonable range
-    return float(np.clip(surprise, 0, 2))
-
-
-def batch_calculate_surprise(
-    embeddings: np.ndarray,
-    lookback: int = 20,
-    method: str = 'cosine'
-) -> np.ndarray:
-    """
-    Calculate surprise scores for a batch of embeddings.
-    
-    Parameters
-    ----------
-    embeddings : np.ndarray
-        Embeddings in chronological order (oldest first)
-    lookback : int
-        Number of historical items to compare against
-    method : str
-        Distance method
-        
-    Returns
-    -------
-    np.ndarray
-        Surprise scores for each embedding
-    """
-    n = len(embeddings)
-    surprises = np.zeros(n)
-    
-    for i in range(n):
-        # Get historical window
-        start_idx = max(0, i - lookback)
-        historical = embeddings[start_idx:i]
-        
-        surprises[i] = calculate_surprise_score(
-            embeddings[i],
-            historical,
-            method=method
-        )
-    
-    return surprises
-
-
-class SurpriseScorer:
-    """
-    Calculates news surprise/novelty scores.
-    
-    Usage:
-        scorer = SurpriseScorer()
-        scores = scorer.score_headlines(headlines)
-    """
-    
-    def __init__(
-        self,
-        model_name: str = DEFAULT_MODEL,
-        lookback: int = 20,
-        distance_method: str = 'cosine'
-    ):
-        self.embedding_model = EmbeddingModel(model_name)
-        self.lookback = lookback
-        self.distance_method = distance_method
-        
-        # Cache for historical embeddings
-        self._embedding_cache = []
-    
-    def score_headlines(
-        self,
-        headlines: List[str],
-        timestamps: Optional[List[datetime]] = None
-    ) -> pd.DataFrame:
-        """
-        Score headlines for surprise/novelty.
-        
-        Parameters
-        ----------
-        headlines : list
-            List of headline texts
-        timestamps : list, optional
-            Timestamps (for sorting)
+            for i, idx in enumerate(to_compute_indices):
+                emb = new_embeddings[i]
+                text = to_compute_texts[i]
+                h = self._get_hash(text)
+                
+                # Update cache and result list
+                self.cache[h] = emb
+                embeddings[idx] = emb
+                
+            self._cache_dirty = True
             
-        Returns
-        -------
-        pd.DataFrame
-            Headlines with embeddings and surprise scores
-        """
-        if not headlines:
-            return pd.DataFrame()
+        result = np.array(embeddings)
         
-        # Sort by timestamp if provided
-        if timestamps:
-            sorted_pairs = sorted(zip(timestamps, headlines))
-            headlines = [h for _, h in sorted_pairs]
+        # Periodically save cache if it grows too much (simple strategy)
+        if self._cache_dirty and len(to_compute_texts) > 100:
+            self.save_cache()
+            
+        return result[0] if single_input else result
         
-        # Generate embeddings
-        logger.info(f"Encoding {len(headlines)} headlines...")
-        embeddings = self.embedding_model.encode(headlines)
+    def similarity(self, text1: str, text2: str) -> float:
+        """Calculate cosine similarity between two texts"""
+        emb1 = self.generate(text1)
+        emb2 = self.generate(text2)
         
-        # Calculate surprise scores
-        logger.info("Calculating surprise scores...")
-        surprises = batch_calculate_surprise(
-            embeddings,
-            lookback=self.lookback,
-            method=self.distance_method
-        )
-        
-        # Build result DataFrame
-        result = pd.DataFrame({
-            'headline': headlines,
-            'surprise_score': surprises,
-            'embedding_dim': [embeddings.shape[1]] * len(headlines)
-        })
-        
-        # Store embeddings as list for later use
-        result['embedding'] = [emb for emb in embeddings]
-        
-        logger.info(f"Scored {len(headlines)} headlines. Avg surprise: {surprises.mean():.3f}")
-        
-        return result
+        return np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
+
+# Singleton instance
+_generator = None
+
+def get_embeddings(texts: Union[str, List[str]], model_name: str = 'all-MiniLM-L6-v2') -> np.ndarray:
+    """Helper function to get embeddings using singleton generator"""
+    global _generator
+    if _generator is None:
+        _generator = EmbeddingGenerator(model_name=model_name)
+    return _generator.generate(texts)
+
+if __name__ == "__main__":
+    # Test
+    print("Testing Embedding Generator...")
+    gen = EmbeddingGenerator()
     
-    def add_to_cache(self, embeddings: np.ndarray):
-        """Add embeddings to historical cache."""
-        self._embedding_cache.extend(list(embeddings))
-        
-        # Limit cache size
-        max_cache = self.lookback * 10
-        if len(self._embedding_cache) > max_cache:
-            self._embedding_cache = self._embedding_cache[-max_cache:]
+    headlines = [
+        "RBI raises repo rate by 25 bps",
+        "Central bank hikes interest rates",
+        "TCS posts strong Q3 profit growth",
+        "Infosys earnings beat estimates",
+        "Nifty hits all-time high"
+    ]
     
-    def score_single(self, headline: str) -> Tuple[float, np.ndarray]:
-        """
-        Score single headline against cache.
-        
-        Returns
-        -------
-        tuple
-            (surprise_score, embedding)
-        """
-        embedding = self.embedding_model.encode_single(headline)
-        
-        if not self._embedding_cache:
-            return 1.0, embedding
-        
-        historical = np.array(self._embedding_cache[-self.lookback:])
-        surprise = calculate_surprise_score(
-            embedding,
-            historical,
-            method=self.distance_method
-        )
-        
-        return surprise, embedding
-
-
-# Convenience functions
-def embed_headlines(headlines: List[str], model: str = DEFAULT_MODEL) -> np.ndarray:
-    """Quick embedding generation."""
-    model = EmbeddingModel(model)
-    return model.encode(headlines)
-
-
-def get_surprise_scores(headlines: List[str], lookback: int = 20) -> np.ndarray:
-    """Quick surprise scoring."""
-    scorer = SurpriseScorer(lookback=lookback)
-    df = scorer.score_headlines(headlines)
-    return df['surprise_score'].values
+    embs = gen.generate(headlines)
+    print(f"Generated {len(embs)} embeddings of shape {embs[0].shape}")
+    
+    sim = gen.similarity(headlines[0], headlines[1])
+    print(f"\nSimilarity between:")
+    print(f"1. {headlines[0]}")
+    print(f"2. {headlines[1]}")
+    print(f"Score: {sim:.4f}")
+    
+    sim_diff = gen.similarity(headlines[0], headlines[2])
+    print(f"\nSimilarity between:")
+    print(f"1. {headlines[0]}")
+    print(f"2. {headlines[2]}")
+    print(f"Score: {sim_diff:.4f}")
+    
+    gen.save_cache()
