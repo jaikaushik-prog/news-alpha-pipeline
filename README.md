@@ -2,57 +2,6 @@
 
 Institutional-grade news sentiment analysis for alpha generation.
 
-## 🚀 Quick Start (Local)
-
-```powershell
-# Install dependencies
-pip install -r requirements.txt
-
-# Run server
-python -m uvicorn webapp.api:app --reload --port 8000
-
-# Open browser: http://localhost:8000
-```
-
-## 🌐 Deploy to Internet
-
-### Option 1: Render.com (FREE - Recommended)
-
-1. **Push to GitHub**
-   ```powershell
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git remote add origin https://github.com/YOUR_USERNAME/news-alpha-pipeline.git
-   git push -u origin main
-   ```
-
-2. **Deploy on Render**
-   - Go to [render.com](https://render.com)
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repo
-   - It will auto-detect `render.yaml`
-   - Click "Create Web Service"
-   - Wait 2-3 minutes for deployment
-
-3. **Your app is live at:** `https://news-alpha-pipeline.onrender.com`
-
-### Option 2: Railway.app (FREE)
-
-```powershell
-npm install -g @railway/cli
-railway login
-railway init
-railway up
-```
-
-### Option 3: Ngrok (Quick temporary URL)
-
-```powershell
-# While server is running locally:
-ngrok http 8000
-# Get public URL like: https://abc123.ngrok.io
-```
 
 ## 📁 Project Structure
 
