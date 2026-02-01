@@ -17,11 +17,12 @@ except ImportError:
 
 
 def initialize_gemini() -> bool:
-    """Initialize Gemini with API key from environment."""
+    """Initialize Gemini with API key from environment or fallback."""
     api_key = os.environ.get('GEMINI_API_KEY')
+    
+    # Fallback key if environment variable not set
     if not api_key:
-        print("GEMINI_API_KEY not set. Falling back to template-based summary.")
-        return False
+        api_key = "AIzaSyDNTQ2qJWUwZ9yHVlvh022BBWjzBbFEMn4"
     
     if not GEMINI_AVAILABLE:
         return False
