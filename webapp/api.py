@@ -679,13 +679,16 @@ def calculate_trinity_score(sector: str, sentiment: float, news_count: int, tota
 try:
     from src.nlp.embeddings import get_embeddings
     from src.nlp.surprise_score import SurpriseModel
+    from src.models.sector_attribution import SectorAttributionModel
     SEMANTIC_LAYER_AVAILABLE = True
     surprise_model = SurpriseModel(memory_window=200)
-    print("Semantic Layer initialized successfully")
+    attribution_model = SectorAttributionModel()
+    print("Semantic Layer (Surprise + Attribution) initialized successfully")
 except ImportError as e:
     print(f"Semantic Layer unavailable: {e}")
     SEMANTIC_LAYER_AVAILABLE = False
     surprise_model = None
+    attribution_model = None
 
 # ============== MAIN ANALYSIS ==============
 def run_live_analysis() -> Dict:
@@ -708,32 +711,49 @@ def run_live_analysis() -> Dict:
             texts = [h['headline'] for h in all_headlines]
             embeddings = get_embeddings(texts) # Returns np.array
             for i, h in enumerate(all_headlines):
-                # Use hash as key
                 h_hash = hashlib.md5(h['headline'].encode()).hexdigest()
                 if i < len(embeddings):
                    headline_embeddings[h_hash] = embeddings[i]
         except Exception as e:
             print(f"Embedding generation failed: {e}")
     
-    # Analyze each headline with enhanced sentiment + surprise
+    # Analyze each headline
     sector_data = {}
+    
     for idx, h in enumerate(all_headlines):
-        sectors = detect_sectors(h['headline'])
         h_hash = hashlib.md5(h['headline'].encode()).hexdigest()
         
-        # Calculate Surprise
-        surprise_data = {'surprise_score': 0.0, 'status': 'disabled'}
+        # 1. Semantic Surpise & Attribution
+        surprise_val = 0.0
+        semantic_sectors = {}
+        
         if SEMANTIC_LAYER_AVAILABLE and h_hash in headline_embeddings:
             emb = headline_embeddings[h_hash]
-            surprise_data = surprise_model.calculate_surprise(emb)
-            # Update model with this new observation
+            
+            # Surprise
+            surp_res = surprise_model.calculate_surprise(emb)
+            surprise_val = surp_res['surprise_score']
             surprise_model.update(emb)
+            
+            # Attribution (Probabilistic)
+            semantic_sectors = attribution_model.get_sector_decomposition(h['headline'], headline_embedding=emb)
         
-        h['surprise_score'] = surprise_data['surprise_score']
+        h['surprise_score'] = surprise_val
         
-        for sector in sectors:
-            if sector == 'general':
-                continue
+        # 2. Keyword Sector Detection
+        keyword_sectors = detect_sectors(h['headline'])
+        
+        # Merge sectors (Union of Keyword and Semantic)
+        # For keyword sectors, we assign weight 1.0 if not present in semantic
+        final_sectors = semantic_sectors.copy()
+        for k_sec in keyword_sectors:
+            if k_sec != 'general' and k_sec not in final_sectors:
+                final_sectors[k_sec] = 1.0 # High confidence for explicit keyword match
+        
+        if not final_sectors:
+            continue
+
+        for sector, weight in final_sectors.items():
             if sector not in sector_data:
                 sector_data[sector] = {'headlines': [], 'sentiments': [], 'surprise': [], 'count': 0, 'sources': set()}
             
@@ -745,9 +765,12 @@ def run_live_analysis() -> Dict:
                 total=total_headlines
             )
             
+            # Weighted contribution? For now, we just add it, but we could scale by 'weight'
+            # Let's count it as a full headline for visibility, but maybe score could be weighted
+            
             sector_data[sector]['headlines'].append(h['headline'])
             sector_data[sector]['sentiments'].append(sentiment_result['score'])
-            sector_data[sector]['surprise'].append(surprise_data['surprise_score'])
+            sector_data[sector]['surprise'].append(surprise_val)
             sector_data[sector]['count'] += 1
             sector_data[sector]['sources'].add(h['source'])
             
