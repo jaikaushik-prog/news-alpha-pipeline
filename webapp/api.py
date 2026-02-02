@@ -941,7 +941,18 @@ def run_live_analysis() -> Dict:
     pulse_headlines = fetch_zerodha_pulse()
     trends_headlines = fetch_google_trends()
     
-    all_headlines = rss_headlines + pulse_headlines + trends_headlines
+    
+    # Interleave sources for better diversity in "Trending Topics"
+    from itertools import zip_longest
+    
+    all_headlines = []
+    # Interleave: RSS, Pulse, RSS, Trends, RSS... 
+    # Since RSS has most (100), we want to prioritize diversity in top 20
+    for r, p, t in zip_longest(rss_headlines, pulse_headlines, trends_headlines):
+        if r: all_headlines.append(r)
+        if p: all_headlines.append(p)
+        if t: all_headlines.append(t)
+    
     total_headlines = len(all_headlines)
     
     if not all_headlines:
