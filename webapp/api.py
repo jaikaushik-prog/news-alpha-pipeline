@@ -1179,8 +1179,12 @@ def debug_ner():
     }
 
 
-@app.get("/", response_class=HTMLResponse)
-async def serve_dashboard():
+@app.get("/", include_in_schema=False)
+@app.head("/", include_in_schema=False)
+def read_root():
+    # Assuming PROJECT_ROOT is defined elsewhere and 'webapp' is a subdirectory
+    # If not, you might need to define PROJECT_ROOT or adjust the path.
+    # For consistency with the original code, let's use Path(__file__).parent
     html_path = Path(__file__).parent / "index.html"
     if html_path.exists():
         return FileResponse(html_path)
