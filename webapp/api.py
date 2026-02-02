@@ -721,14 +721,29 @@ try:
     from src.nlp.surprise_score import SurpriseModel
     from src.models.sector_attribution import SectorAttributionModel
     SEMANTIC_LAYER_AVAILABLE = True
-    surprise_model = SurpriseModel(memory_window=200)
-    attribution_model = SectorAttributionModel()
-    print("Semantic Layer (Surprise + Attribution) initialized successfully")
+    # Lazy Init
+    surprise_model = None
+    attribution_model = None
+    print("Semantic Layer modules imported - models will lazy load")
 except ImportError as e:
     print(f"Semantic Layer unavailable: {e}")
     SEMANTIC_LAYER_AVAILABLE = False
     surprise_model = None
     attribution_model = None
+
+def ensure_semantic_models():
+    """Lazy load heavy models"""
+    global surprise_model, attribution_model
+    if not SEMANTIC_LAYER_AVAILABLE:
+        return
+        
+    if surprise_model is None:
+        print("Lazy-loading SurpriseModel...")
+        surprise_model = SurpriseModel(memory_window=200)
+        
+    if attribution_model is None:
+        print("Lazy-loading SectorAttributionModel...")
+        attribution_model = SectorAttributionModel()
 
 # ============== LIVE DATA LAYER ==============
 try:
@@ -936,6 +951,9 @@ def generate_ai_summary(sector_signals: List[Dict], top_stocks: List[Dict], regi
 
 def run_live_analysis() -> Dict:
     """Run full live analysis pipeline with enhanced sentiment and semantic surprise"""
+    
+    # Lazy load models if needed
+    ensure_semantic_models()
     
     rss_headlines = fetch_rss_headlines(100)
     pulse_headlines = fetch_zerodha_pulse()
