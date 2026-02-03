@@ -1,8 +1,3 @@
-"""
-Quick Demo: Process one budget speech and show results.
-
-This script demonstrates the NLP pipeline on the latest budget speech.
-"""
 
 import sys
 from pathlib import Path
