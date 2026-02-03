@@ -9,8 +9,16 @@ import hashlib
 from typing import List, Dict, Union, Optional
 from pathlib import Path
 import numpy as np
-import torch
-from sentence_transformers import SentenceTransformer
+import os
+import sys
+import pickle
+import hashlib
+from typing import List, Dict, Union, Optional
+from pathlib import Path
+import numpy as np
+# Lazy import torch and sentence_transformers
+# import torch
+# from sentence_transformers import SentenceTransformer
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -25,16 +33,9 @@ class EmbeddingGenerator:
     def __init__(self, model_name: str = 'all-MiniLM-L6-v2', cache_dir: Optional[str] = None):
         """
         Initialize the embedding generator.
-        
-        Args:
-            model_name: Name of the SentenceTransformer model
-            cache_dir: Directory to store embedding cache (default: data/cache/embeddings)
         """
         self.model_name = model_name
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print(f"Initializing EmbeddingGenerator with {model_name} on {self.device}...")
-        
-        self.model = SentenceTransformer(model_name, device=self.device)
+        self._model = None # Lazy load
         
         # Setup cache
         if cache_dir:
@@ -46,6 +47,22 @@ class EmbeddingGenerator:
         self.cache_file = self.cache_path / f"emb_cache_{model_name.replace('/', '_')}.pkl"
         self.cache = self._load_cache()
         self._cache_dirty = False
+
+    def _load_model(self):
+        """Lazy load the heavy model"""
+        if self._model is not None:
+            return
+
+        print(f"Loading SentenceTransformer: {self.model_name}...")
+        try:
+            import torch
+            from sentence_transformers import SentenceTransformer
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            print(f"Initializing model on {device}...")
+            self._model = SentenceTransformer(self.model_name, device=device)
+        except ImportError:
+            print("ERROR: sentence-transformers or torch not found! Embeddings will fail.")
+            raise
         
     def _load_cache(self) -> Dict[str, np.ndarray]:
         """Load embeddings from disk"""
@@ -110,8 +127,9 @@ class EmbeddingGenerator:
         
         # Compute missing embeddings
         if to_compute_texts:
+            self._load_model() # Ensure model is loaded
             print(f"Computing embeddings for {len(to_compute_texts)} new items...")
-            new_embeddings = self.model.encode(to_compute_texts, convert_to_numpy=True)
+            new_embeddings = self._model.encode(to_compute_texts, convert_to_numpy=True)
             
             for i, idx in enumerate(to_compute_indices):
                 emb = new_embeddings[i]

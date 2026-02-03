@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
@@ -19,12 +19,62 @@ from pydantic import BaseModel
 import threading
 import time
 import requests
+import asyncio
+import traceback
+from contextlib import asynccontextmanager
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-app = FastAPI(title="News Alpha Pipeline", version="3.1.0")
+# ============== BACKGROUND WORKER ==============
+LATEST_ANALYSIS = None
+
+async def update_analysis_loop():
+    """Background task to keep analysis fresh without blocking main thread"""
+    global LATEST_ANALYSIS
+    print("Background Worker: Starting analysis loop...")
+    
+    # Warmup delay to allow server to bind ports and serve health check
+    await asyncio.sleep(5)
+    
+    while True:
+        try:
+            print(f"Background Worker: Running update at {datetime.now().isoformat()}...")
+            loop = asyncio.get_running_loop()
+            # Run heavy analysis in threadpool
+            # run_live_analysis is defined later in this file
+            result = await loop.run_in_executor(None, run_live_analysis)
+            LATEST_ANALYSIS = result
+            print("Background Worker: Analysis updated successfully")
+        except Exception as e:
+            print(f"Background Worker Error: {e}")
+            traceback.print_exc()
+        
+        # Refresh every 15 minutes
+        await asyncio.sleep(900)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    worker = asyncio.create_task(update_analysis_loop())
+    yield
+    # Shutdown
+    worker.cancel()
+    try:
+        await worker
+    except asyncio.CancelledError:
+        pass
+
+app = FastAPI(title="News Alpha Pipeline", version="3.2.0", lifespan=lifespan)
+
+# Define Lite Mode Global
+try:
+    LITE_MODE = os.environ.get('MEMORY_OPTIMIZED', 'false').lower() == 'true'
+    if LITE_MODE:
+        print("WARNING: Running in LITE MODE (Memory Optimized). Semantic features disabled.")
+except Exception:
+    LITE_MODE = False
 
 # ============== KEEP-ALIVE PINGER ==============
 def run_pinger():
@@ -736,13 +786,19 @@ def ensure_semantic_models():
     global surprise_model, attribution_model
     if not SEMANTIC_LAYER_AVAILABLE:
         return
-        
+    
     if surprise_model is None:
-        print("Lazy-loading SurpriseModel...")
-        surprise_model = SurpriseModel(memory_window=200)
+        if LITE_MODE:
+            print("SurpriseModel skipped in LITE MODE")
+            # Create a dummy or handle None upstream
+            pass 
+        else:
+            print("Lazy-loading SurpriseModel...")
+            surprise_model = SurpriseModel(memory_window=200)
         
     if attribution_model is None:
-        print("Lazy-loading SectorAttributionModel...")
+        # SectorAttributionModel handles lite mode internally
+        print(f"Lazy-loading SectorAttributionModel (connected to Lite Mode: {LITE_MODE})...")
         attribution_model = SectorAttributionModel()
 
 # ============== LIVE DATA LAYER ==============
@@ -978,7 +1034,7 @@ def run_live_analysis() -> Dict:
     
     # Process batch embeddings if available
     headline_embeddings = {}
-    if SEMANTIC_LAYER_AVAILABLE:
+    if SEMANTIC_LAYER_AVAILABLE and not LITE_MODE:
         try:
             texts = [h['headline'] for h in all_headlines]
             embeddings = get_embeddings(texts) # Returns np.array
@@ -1004,9 +1060,12 @@ def run_live_analysis() -> Dict:
             emb = headline_embeddings[h_hash]
             
             # Surprise
-            surp_res = surprise_model.calculate_surprise(emb)
-            surprise_val = surp_res['surprise_score']
-            surprise_model.update(emb)
+            if surprise_model:
+                surp_res = surprise_model.calculate_surprise(emb)
+                surprise_val = surp_res['surprise_score']
+                surprise_model.update(emb)
+            else:
+                 surprise_val = 0.5 # Neutral surprise
             
             # Attribution (Probabilistic)
             semantic_sectors = attribution_model.get_sector_decomposition(h['headline'], headline_embedding=emb)
@@ -1199,8 +1258,13 @@ async def health_check():
 @app.post("/api/analyze")
 async def analyze_news(request: AnalysisRequest = None):
     try:
-        result = run_live_analysis()
-        return result
+        if LATEST_ANALYSIS is None:
+            return {
+                "status": "warming_up",
+                "message": "Analysis is initializing in the background. Please try again in a minute.",
+                "timestamp": datetime.now().isoformat()
+            }
+        return LATEST_ANALYSIS
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

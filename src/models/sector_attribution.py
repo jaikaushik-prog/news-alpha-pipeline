@@ -3,26 +3,32 @@ Semantic Sector Attribution Model
 Maps news headlines to sectors probabilistically using semantic embeddings.
 """
 import sys
-import numpy as np
-from typing import Dict, List, Optional, Tuple
-from pathlib import Path
-
-# Add project root to path
-PROJECT_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.nlp.embeddings import get_embeddings
-
-class SectorAttributionModel:
-    """
-    Calculates the exposure of a news item to various sectors based on 
-    semantic similarity to sector definitions.
-    """
     
     def __init__(self):
+        self.lite_mode = os.environ.get('MEMORY_OPTIMIZED', 'false').lower() == 'true'
         self.sector_profiles = self._define_sectors()
         self.sector_embeddings = {}
-        self._initialize_embeddings()
+        
+        if self.lite_mode:
+            print("SectorAttributionModel running in LITE MODE (Keyword-based)")
+            self.sector_keywords = self._define_keywords()
+        else:
+            self._initialize_embeddings()
+
+    def _define_keywords(self) -> Dict[str, List[str]]:
+        """Fallback keywords for lite mode"""
+        return {
+            'banking': ['bank', 'rbi', 'repo', 'loan', 'credit', 'npa', 'fintech', 'liquidity', 'lending'],
+            'it': ['software', 'it services', 'cloud', 'ai', 'digital', 'tech', 'infosys', 'tcs', 'wipro', 'hcl'],
+            'auto': ['auto', 'vehicle', 'car', 'bike', 'ev', 'electric', 'sales', 'tata motors', 'maruti'],
+            'pharma': ['pharma', 'drug', 'fda', 'health', 'vaccine', 'clinical', 'hospital', 'sun pharma', 'dr reddy'],
+            'energy': ['oil', 'gas', 'energy', 'power', 'renewable', 'solar', 'coal', 'reliance', 'oncg'],
+            'fmcg': ['fmcg', 'consumer', 'retail', 'food', 'staples', 'itc', 'hul', 'nestle'],
+            'metals': ['metal', 'steel', 'iron', 'copper', 'aluminium', 'mining', 'tata steel', 'hindalco'],
+            'infra': ['infra', 'construction', 'road', 'cement', 'real estate', 'housing', 'lt', 'dlf'],
+            'telecom': ['telecom', '5g', 'spectrum', 'data', 'tariff', 'jio', 'airtel', 'vodafone'],
+            'defence': ['defence', 'defense', 'military', 'navy', 'army', 'missile', 'drone', 'hal', 'bel']
+        }
         
     def _define_sectors(self) -> Dict[str, str]:
         """
@@ -55,6 +61,13 @@ class SectorAttributionModel:
         Decompose a headline into sector weights.
         Returns a dictionary of {sector: weight} where weight is [0, 1].
         """
+        """
+        Decompose a headline into sector weights.
+        Returns a dictionary of {sector: weight} where weight is [0, 1].
+        """
+        if self.lite_mode:
+            return self._get_keyword_decomposition(headline)
+
         if headline_embedding is None:
             headline_embedding = get_embeddings(headline)
             
@@ -83,7 +96,22 @@ class SectorAttributionModel:
         filtered_weights = {k: v for k, v in weights.items() if v > 0.15}
         
         # Sort by weight desc
+        # Sort by weight desc
         return dict(sorted(filtered_weights.items(), key=lambda item: item[1], reverse=True))
+
+    def _get_keyword_decomposition(self, headline: str) -> Dict[str, float]:
+        """Simple keyword matching for memory constrained environments"""
+        weights = {}
+        processed = headline.lower()
+        
+        for sector, keywords in self.sector_keywords.items():
+            count = sum(1 for k in keywords if k in processed)
+            if count > 0:
+                # Simple scoring: 0.4 for 1 match, 0.7 for 2, 0.9 for 3+
+                score = min(0.9, 0.3 + (count * 0.2))
+                weights[sector] = score
+        
+        return dict(sorted(weights.items(), key=lambda item: item[1], reverse=True))
 
 if __name__ == "__main__":
     # Test
