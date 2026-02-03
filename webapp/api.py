@@ -604,7 +604,7 @@ def fetch_single_rss_feed(args) -> List[Dict]:
             feed_url,
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         )
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, timeout=3) as response:
             content = response.read()
             root = ET.fromstring(content)
             
@@ -675,7 +675,7 @@ def _old_fetch_rss_headlines(max_items: int = 100) -> List[Dict]:
                     feed_url,
                     headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
                 )
-                with urllib.request.urlopen(req, timeout=10) as response:
+                with urllib.request.urlopen(req, timeout=3) as response:
                     content = response.read()
                     root = ET.fromstring(content)
                     
@@ -1007,9 +1007,9 @@ def generate_ai_summary(sector_signals: List[Dict], top_stocks: List[Dict], regi
 
 def run_live_analysis() -> Dict:
     """Run full live analysis pipeline with enhanced sentiment and semantic surprise"""
-    
-    # Lazy load models if needed
-    ensure_semantic_models()
+    try:
+        # Lazy load models if needed
+        ensure_semantic_models()
     
     rss_headlines = fetch_rss_headlines(100)
     pulse_headlines = fetch_zerodha_pulse()
@@ -1218,6 +1218,18 @@ def run_live_analysis() -> Dict:
         },
         'analysis_version': '4.2 (Gemini AI)'
     }
+    except Exception as e:
+        print(f"CRITICAL ERROR in analysis: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            'timestamp': datetime.now().isoformat(),
+            'headlines_analyzed': 0,
+            'effective_sentiment': 0,
+            'regime': 'error',
+            'ai_summary': f"Analysis error: {str(e)[:100]}",
+            'headlines': [], 'sector_signals': [], 'long_sectors': [], 'short_sectors': [], 'high_conviction': [], 'top_stocks': [], 'word_cloud': [], 'reddit_sentiment': {'available': False}, 'sources': [], 'source_breakdown': {}, 'analysis_version': '4.2-error'
+        }
 
 
 # ============== API ENDPOINTS ==============
