@@ -2,7 +2,23 @@
 Semantic Sector Attribution Model
 Maps news headlines to sectors probabilistically using semantic embeddings.
 """
+import os
 import sys
+import numpy as np
+from typing import Dict, List, Optional, Tuple
+from pathlib import Path
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.nlp.embeddings import get_embeddings
+
+class SectorAttributionModel:
+    """
+    Calculates the exposure of a news item to various sectors based on 
+    semantic similarity to sector definitions.
+    """
     
     def __init__(self):
         self.lite_mode = os.environ.get('MEMORY_OPTIMIZED', 'false').lower() == 'true'
