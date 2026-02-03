@@ -538,7 +538,7 @@ def fetch_google_trends() -> List[Dict]:
             GOOGLE_TRENDS_API,
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         )
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=2) as response:
             content = response.read().decode('utf-8')
             if content.startswith(")]}'"):
                 content = content[5:]
@@ -567,7 +567,7 @@ def fetch_zerodha_pulse() -> List[Dict]:
             'https://pulse.zerodha.com/',
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html'}
         )
-        with urllib.request.urlopen(req, timeout=8) as response:
+        with urllib.request.urlopen(req, timeout=2) as response:
             content = response.read().decode('utf-8', errors='ignore')
             
             title_patterns = [
@@ -1165,7 +1165,9 @@ def run_live_analysis() -> Dict:
     
     # Generate AI Summary (Gemini if available, else template)
     headline_texts = [h['headline'] for h in all_headlines[:10]]
-    ai_summary = generate_ai_summary(sector_signals, top_stocks, regime, headline_texts)
+    # AI Summary temporarily disabled for performance
+    ai_summary = "AI Summary disabled for speed. Run analysis to regenerate."
+    # ai_summary = generate_ai_summary(sector_signals, top_stocks, regime, headline_texts)
     
     # Prepare headlines for timeline (top 20)
     headlines_timeline = []

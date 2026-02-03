@@ -948,7 +948,10 @@
         async function runLiveAnalysis() {
             runBtn.disabled = true;
             statusText.textContent = 'Analysing...';
-            sectorTableContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            // Only show loading spinner if this is a manual trigger or initial load (not auto-refresh polling)
+            if (sectorTableContainer.innerHTML.includes('No data') || sectorTableContainer.innerHTML.includes('Analysis failed')) {
+                sectorTableContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            }
 
             try {
                 const response = await fetch(`${API_BASE}/api/analyze`, {
@@ -956,16 +959,43 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ max_headlines: 100, max_age_hours: 24 })
                 });
-                if (!response.ok) throw new Error('Analysis failed');
+
+                if (!response.ok) {
+                    const err = await response.text();
+                    throw new Error(`Server Error (${response.status}): ${err}`);
+                }
+
                 const data = await response.json();
+
+                // Handle Warming Up State
+                if (data.status === 'warming_up') {
+                    statusText.textContent = 'Warming Up...';
+                    sectorTableContainer.innerHTML = `
+                        <div class="loading" style="flex-direction: column; text-align: center;">
+                            <div class="spinner"></div>
+                            <p style="margin-top: 1rem; color: var(--text-secondary);">${data.message}</p>
+                            <p style="font-size: 0.8rem; color: var(--text-muted);">Retrying in 5 seconds...</p>
+                        </div>
+                    `;
+                    // Poll again in 5 seconds
+                    setTimeout(runLiveAnalysis, 5000);
+                    return;
+                }
+
                 updateDashboard(data);
                 statusText.textContent = `Live • ${data.headlines_analyzed} headlines`;
             } catch (error) {
                 console.error('Live analysis failed:', error);
                 statusText.textContent = 'Analysis Failed';
-                sectorTableContainer.innerHTML = '<p style="color: var(--accent-red); text-align: center;">Analysis failed. Please ensure the backend is running.</p>';
+                sectorTableContainer.innerHTML = `<p style="color: var(--accent-red); text-align: center; padding: 2rem;">
+                    Analysis failed. <br>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Error: ${error.message}</span>
+                </p>`;
             } finally {
-                runBtn.disabled = false;
+                // Only re-enable button if we are not polling (warming up handles its own retry)
+                if (statusText.textContent !== 'Warming Up...') {
+                    runBtn.disabled = false;
+                }
             }
         }
 
@@ -973,7 +1003,7 @@
 
         // Update Dashboard
         function updateDashboard(data) {
-            document.getElementById('statHeadlines').textContent = data.headlines_analyzed || '--';
+            document.getElementById('statHeadlines').textContent = data.headlines_analyzed || '0';
 
             const sentiment = data.effective_sentiment || 0;
             const sentimentEl = document.getElementById('statSentiment');
